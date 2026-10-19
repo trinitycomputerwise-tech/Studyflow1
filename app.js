@@ -288,8 +288,13 @@ function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
 
-  if (authSection) authSection.hidden = Boolean(user);
-  if (dashboard) dashboard.hidden = !user;
+  if (authSection) {
+    authSection.hidden = false;
+  }
+
+  if (dashboard) {
+    dashboard.hidden = !user;
+  }
 
   if (authUser) {
     authUser.textContent = user
@@ -297,12 +302,22 @@ function updateAuthUI(user) {
       : "You are not signed in.";
   }
 
-  if (authForm) authForm.hidden = Boolean(user);
-  if (signupButton) signupButton.hidden = Boolean(user);
-  if (loginButton) loginButton.hidden = Boolean(user);
-  if (logoutButton) logoutButton.hidden = !user;
-}
+  if (authForm) {
+    authForm.hidden = Boolean(user);
+  }
 
+  if (signupButton) {
+    signupButton.hidden = Boolean(user);
+  }
+
+  if (loginButton) {
+    loginButton.hidden = Boolean(user);
+  }
+
+  if (logoutButton) {
+    logoutButton.hidden = !user;
+  }
+}
 
 // Log in existing users
 authForm?.addEventListener("submit", async (event) => {
