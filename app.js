@@ -269,3 +269,118 @@ $("#year").textContent = new Date().getFullYear();
 
 // A clean first-run experience: the dashboard starts empty, ready for your real assignments.
 renderAll();
+
+/* StudyFlow email authentication */
+
+const authForm = document.getElementById("auth-form");
+const signupButton = document.getElementById("signup-button");
+const loginButton = document.getElementById("login-button");
+const logoutButton = document.getElementById("logout-button");
+const authMessage = document.getElementById("auth-message");
+const authUser = document.getElementById("auth-user");
+
+function showAuthMessage(message) {
+  if (authMessage) authMessage.textContent = message;
+}
+
+function updateAuthUI(user) {
+  if (!authForm) return;
+
+  authForm.hidden = Boolean(user);
+  signupButton.hidden = Boolean(user);
+  loginButton.hidden = Boolean(user);
+  logoutButton.hidden = !user;
+
+  authUser.textContent = user
+    ? "Signed in as " + user.email
+    : "You are not signed in.";
+}
+
+// Log in existing users
+authForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const email = document.getElementById("auth-email").value.trim();
+  const password = document.getElementById("auth-password").value;
+
+  showAuthMessage("Signing in...");
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  updateAuthUI(data.user);
+  showAuthMessage("Login successful!");
+});
+
+// Create new accounts
+signupButton?.addEventListener("click", async () => {
+  const email = document.getElementById("auth-email").value.trim();
+  const password = document.getElementById("auth-password").value;
+
+  if (!email || password.length < 6) {
+    showAuthMessage("Enter your email and a password of at least 6 characters.");
+    return;
+  }
+
+  showAuthMessage("Creating your account...");
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin
+    }
+  });
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  if (data.session) {
+    updateAuthUI(data.user);
+    showAuthMessage("Account created successfully!");
+  } else {
+    showAuthMessage(
+      "Account created. Check your email to confirm your address, then log in."
+    );
+  }
+});
+
+// Log out
+logoutButton?.addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  updateAuthUI(null);
+  showAuthMessage("You have logged out.");
+});
+
+// Restore the existing login session on page load
+(async () => {
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  updateAuthUI(data.session?.user ?? null);
+})();
+
+// Update the interface when authentication changes
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  updateAuthUI(session?.user ?? null);
+});
+
