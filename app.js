@@ -283,7 +283,6 @@ function showAuthMessage(message) {
   if (authMessage) authMessage.textContent = message;
 }
 
-
 function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
