@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="StudyFlow helps you organize assignments, manage deadlines, and track study progress.">
+  <title>StudyFlow — Your assignments, organized</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="StudyFlow home"><span class="brand-mark">▱</span><span>Study<span>Flow</span></span></a>
+      <p class="sidebar-label">WORKSPACE</p>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Dashboard</button>
+        <button class="nav-item" data-view="assignments"><span>▤</span> Assignments <span class="nav-count" id="navCount">0</span></button>
+        <button class="nav-item" data-view="subjects"><span>▧</span> Subjects</button>
+        <button class="nav-item" data-view="calendar"><span>▦</span> Calendar</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="focus-card">
+          <div class="focus-icon">✦</div>
+          <strong>Small steps, big results.</strong>
+          <p>Stay consistent. Your future self will thank you.</p>
+        </div>
+        <button class="nav-item" id="themeToggle"><span>☼</span> Toggle appearance</button>
+        <div class="profile">
+          <div class="avatar">J</div>
+          <div><strong>Study Student</strong><small>Keep learning</small></div>
+          <span class="profile-dots">•••</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+        <div class="breadcrumb">Workspace <span>/</span> <strong id="pageLabel">Dashboard</strong></div>
+        <div class="top-actions">
+          <span class="today-label" id="todayLabel"></span>
+          <button class="icon-button" id="headerTheme" aria-label="Toggle dark mode">☼</button>
+          <button class="primary-button" id="topAdd"><span>＋</span> Add assignment</button>
+        </div>
+      </header>
+
+      <section class="view active-view" id="dashboardView">
+        <div class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR PERSONAL STUDY SPACE</p>
+            <h1>Good day, learner <span class="wave">✦</span></h1>
+            <p class="muted">A little progress each day adds up to big results.</p>
+          </div>
+          <div class="welcome-art" aria-hidden="true"><div class="art-sun"></div><div class="art-book book-one"></div><div class="art-book book-two"></div><div class="art-book book-three"></div><div class="art-plant">♧</div></div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card stat-blue"><div class="stat-top"><span>Total assignments</span><span class="stat-icon">▤</span></div><div class="stat-number" id="totalStat">0</div><div class="stat-foot"><span class="dot blue-dot"></span> All your tasks in one place</div></article>
+          <article class="stat-card stat-amber"><div class="stat-top"><span>Pending</span><span class="stat-icon">◷</span></div><div class="stat-number" id="pendingStat">0</div><div class="stat-foot"><span class="dot amber-dot"></span> Still on your to-do list</div></article>
+          <article class="stat-card stat-green"><div class="stat-top"><span>Completed</span><span class="stat-icon">✓</span></div><div class="stat-number" id="completedStat">0</div><div class="stat-foot"><span class="dot green-dot"></span> Look how far you've come</div></article>
+          <article class="stat-card stat-red"><div class="stat-top"><span>Overdue</span><span class="stat-icon">!</span></div><div class="stat-number" id="overdueStat">0</div><div class="stat-foot"><span class="dot red-dot"></span> Needs your attention</div></article>
+        </div>
+
+        <div class="content-grid">
+          <div class="main-column">
+            <section class="panel progress-panel">
+              <div class="panel-heading"><div><p class="eyebrow">YOUR MOMENTUM</p><h2>Study progress</h2></div><span class="heading-icon">↗</span></div>
+              <div class="progress-content">
+                <div class="progress-ring" id="progressRing"><div><strong id="progressPercent">0%</strong><span>completed</span></div></div>
+                <div class="progress-details"><div class="progress-summary"><strong id="progressCount">0 of 0</strong><span> assignments completed</span></div><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><p class="muted small" id="progressMessage">Add your first assignment to start tracking progress.</p></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><div><p class="eyebrow">STAY ON TOP OF IT</p><h2>Upcoming assignments</h2></div><button class="text-button" data-go="assignments">View all →</button></div>
+              <div id="upcomingList" class="task-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><div><p class="eyebrow">YOUR LEARNING MIX</p><h2>Subject overview</h2></div><button class="text-button" data-go="subjects">All subjects →</button></div>
+              <div id="subjectOverview" class="subject-grid"></div>
+            </section>
+          </div>
+          <aside class="right-column">
+            <section class="panel quick-panel">
+              <div class="panel-heading"><div><p class="eyebrow">QUICK ACTION</p><h2>Make a plan</h2></div><span class="heading-icon">✦</span></div>
+              <p class="muted small">A clear plan makes the next step easier.</p>
+              <button class="quick-action" id="quickAdd"><span class="quick-symbol">＋</span><span><strong>Add assignment</strong><small>Capture a task and deadline</small></span><span class="quick-arrow">→</span></button>
+              <button class="quick-action" data-go="calendar"><span class="quick-symbol purple">▦</span><span><strong>Check your schedule</strong><small>See what's coming up</small></span><span class="quick-arrow">→</span></button>
+            </section>
+            <section class="panel tip-panel"><div class="tip-badge">✧ STUDY TIP</div><h3>Try the 25-minute focus sprint</h3><p>Choose one task, focus for 25 minutes, then take a 5-minute break. Small focused sessions can make studying feel more manageable.</p><div class="tip-bottom"><span>FOCUS • REST • REPEAT</span><span>✦</span></div></section>
+            <section class="panel activity-panel"><div class="panel-heading"><div><p class="eyebrow">RECENT CHANGES</p><h2>Activity</h2></div><span class="heading-icon">↻</span></div><div id="activityList" class="activity-list"></div></section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="assignmentsView">
+        <div class="page-intro"><div><p class="eyebrow">YOUR TASK LIST</p><h1>Assignments</h1><p class="muted">Every big achievement starts with one completed task.</p></div><button class="primary-button" id="assignAdd">＋ Add assignment</button></div>
+        <section class="panel">
+          <div class="filter-row"><label class="search-box">⌕ <input id="searchInput" type="search" placeholder="Search assignments..." aria-label="Search assignments"></label><select id="statusFilter" aria-label="Filter by status"><option value="all">All statuses</option><option value="pending">Pending</option><option value="completed">Completed</option><option value="overdue">Overdue</option></select><select id="subjectFilter" aria-label="Filter by subject"><option value="all">All subjects</option></select></div>
+          <div class="table-wrap"><table><thead><tr><th>Assignment</th><th>Subject</th><th>Due date</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead><tbody id="assignmentTable"></tbody></table></div>
+          <div id="emptyAssignments" class="empty-state hidden"><span>✦</span><h3>No assignments found</h3><p>Try changing your filters or add a new assignment.</p><button class="primary-button" id="emptyAdd">＋ Add assignment</button></div>
+        </section>
+      </section>
+
+      <section class="view" id="subjectsView">
+        <div class="page-intro"><div><p class="eyebrow">ORGANIZE YOUR LEARNING</p><h1>Subjects</h1><p class="muted">See how your work is distributed across subjects.</p></div></div>
+        <div id="subjectsPageGrid" class="subjects-page-grid"></div>
+      </section>
+
+      <section class="view" id="calendarView">
+        <div class="page-intro"><div><p class="eyebrow">PLAN AHEAD</p><h1>Assignment calendar</h1><p class="muted">Your deadlines, organized by date.</p></div><button class="primary-button" id="calendarAdd">＋ Add assignment</button></div>
+        <section class="panel"><div id="calendarList" class="calendar-list"></div></section>
+      </section>
+
+      <footer class="footer"><span>© <span id="year"></span> StudyFlow</span><span>Made for focused learning <b>•</b> Plan. Study. Achieve.</span></footer>
+    </main>
+  </div>
+
+  <dialog id="assignmentDialog" class="assignment-dialog">
+    <form id="assignmentForm">
+      <div class="dialog-heading"><div><p class="eyebrow">MAKE YOUR NEXT MOVE</p><h2 id="dialogTitle">Add assignment</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close dialog">×</button></div>
+      <input type="hidden" id="assignmentId">
+      <label>Assignment title <input id="titleInput" required maxlength="100" placeholder="e.g. Research essay"></label>
+      <div class="form-row"><label>Subject <input id="subjectInput" required maxlength="50" placeholder="e.g. Computer Science" list="subjectOptions"></label><datalist id="subjectOptions"><option value="Mathematics"><option value="Computer Science"><option value="English"><option value="Physics"><option value="Biology"><option value="History"></datalist><label>Due date <input id="dueInput" type="date" required></label></div>
+      <div class="form-row"><label>Priority <select id="priorityInput"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select></label><label>Status <select id="statusInput"><option value="Pending">Pending</option><option value="Completed">Completed</option></select></label></div>
+      <label>Notes <textarea id="notesInput" rows="3" maxlength="500" placeholder="Add a note or the next step (optional)"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button">Save assignment</button></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
