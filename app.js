@@ -283,18 +283,26 @@ function showAuthMessage(message) {
   if (authMessage) authMessage.textContent = message;
 }
 
+
 function updateAuthUI(user) {
-  if (!authForm) return;
+  const authSection = document.getElementById("auth-section");
+  const dashboard = document.getElementById("dashboard-content");
 
-  authForm.hidden = Boolean(user);
-  signupButton.hidden = Boolean(user);
-  loginButton.hidden = Boolean(user);
-  logoutButton.hidden = !user;
+  if (authSection) authSection.hidden = Boolean(user);
+  if (dashboard) dashboard.hidden = !user;
 
-  authUser.textContent = user
-    ? "Signed in as " + user.email
-    : "You are not signed in.";
+  if (authUser) {
+    authUser.textContent = user
+      ? "Signed in as " + user.email
+      : "You are not signed in.";
+  }
+
+  if (authForm) authForm.hidden = Boolean(user);
+  if (signupButton) signupButton.hidden = Boolean(user);
+  if (loginButton) loginButton.hidden = Boolean(user);
+  if (logoutButton) logoutButton.hidden = !user;
 }
+
 
 // Log in existing users
 authForm?.addEventListener("submit", async (event) => {
