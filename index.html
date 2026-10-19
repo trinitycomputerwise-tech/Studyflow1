@@ -12,6 +12,39 @@
   <script src="app.js" defer></script>
 </head>
 <body>
+  <section id="auth-section">
+    <h2>Welcome to StudyFlow</h2>
+    <p>Sign in or create an account to get started.</p>
+
+    <form id="auth-form">
+      <label for="auth-email">Email address</label>
+      <input
+        id="auth-email"
+        type="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        required
+      />
+
+      <label for="auth-password">Password</label>
+      <input
+        id="auth-password"
+        type="password"
+        autocomplete="current-password"
+        minlength="6"
+        placeholder="At least 6 characters"
+        required
+      />
+
+      <button type="submit" id="login-button">Log in</button>
+      <button type="button" id="signup-button">Create account</button>
+      <button type="button" id="logout-button" hidden>Log out</button>
+    </form>
+
+    <p id="auth-message" role="status" aria-live="polite"></p>
+    <p id="auth-user"></p>
+  </section>
+
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#" aria-label="StudyFlow home"><span class="brand-mark">▱</span><span>Study<span>Flow</span></span></a>
@@ -47,40 +80,6 @@
           <button class="primary-button" id="topAdd"><span>＋</span> Add assignment</button>
         </div>
       </header>
-      
-  <section id="auth-section">
-    <h2>Welcome to StudyFlow</h2>
-    <p>Sign in or create an account to get started.</p>
-
-    <form id="auth-form">
-      <label for="auth-email">Email address</label>
-      <input
-        id="auth-email"
-        type="email"
-        autocomplete="email"
-        placeholder="you@example.com"
-        required
-      />
-
-      <label for="auth-password">Password</label>
-      <input
-        id="auth-password"
-        type="password"
-        autocomplete="current-password"
-        minlength="6"
-        placeholder="At least 6 characters"
-        required
-      />
-
-      <button type="submit" id="login-button">Log in</button>
-      <button type="button" id="signup-button">Create account</button>
-      <button type="button" id="logout-button" hidden>Log out</button>
-    </form>
-
-    <p id="auth-message" role="status" aria-live="polite"></p>
-    <p id="auth-user"></p>
-  </section>
-
 
       <section class="view active-view" id="dashboardView">
         <div class="welcome-row">
