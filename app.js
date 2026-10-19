@@ -1,3 +1,13 @@
+
+/* StudyFlow Supabase connection */
+const SUPABASE_URL = "https://vpkqhxzzqdlqaqvioxbd.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
 const STORAGE_KEY = "studyflow.assignments.v1";
 const ACTIVITY_KEY = "studyflow.activity.v1";
 const $ = (selector, root = document) => root.querySelector(selector);
