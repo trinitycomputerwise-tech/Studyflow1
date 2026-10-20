@@ -287,8 +287,8 @@ function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
 
-  if (authSection) {
-    authSection.hidden = false;
+    if (authSection) {
+    authSection.hidden = Boolean(user);
   }
 
   if (dashboard) {
