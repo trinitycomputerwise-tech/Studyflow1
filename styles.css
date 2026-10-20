@@ -7,3 +7,44 @@
 [hidden] {
   display: none !important;
 }
+
+.logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: var(--red-soft);
+}
+
+.logout-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .profile {
+    flex-wrap: wrap;
+  }
+
+  .logout-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .sidebar.mobile-open .logout-btn {
+    display: inline-flex;
+  }
+}
