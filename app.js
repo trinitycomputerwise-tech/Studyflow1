@@ -375,18 +375,41 @@ signupButton?.addEventListener("click", async () => {
   }
 });
 
-// Log out
-logoutButton?.addEventListener("click", async () => {
-  const { error } = await supabaseClient.auth.signOut();
 
-  if (error) {
-    showAuthMessage(error.message);
-    return;
+ // Log out
+const dashboardLogoutButton =
+  document.getElementById("dashboard-logout");
+
+async function handleLogout() {
+  if (logoutButton) logoutButton.disabled = true;
+  if (dashboardLogoutButton) {
+    dashboardLogoutButton.disabled = true;
   }
 
-  updateAuthUI(null);
-  showAuthMessage("You have logged out.");
-});
+  try {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+      showAuthMessage(error.message);
+      return;
+    }
+
+    updateAuthUI(null);
+    showAuthMessage("You have logged out.");
+  } catch (error) {
+    showAuthMessage(
+      error.message || "Unable to log out. Please try again."
+    );
+  } finally {
+    if (logoutButton) logoutButton.disabled = false;
+    if (dashboardLogoutButton) {
+      dashboardLogoutButton.disabled = false;
+    }
+  }
+}
+
+logoutButton?.addEventListener("click", handleLogout);
+dashboardLogoutButton?.addEventListener("click", handleLogout);
 
 // Restore the existing login session on page load
 (async () => {
