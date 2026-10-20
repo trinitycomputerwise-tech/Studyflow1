@@ -1,45 +1,40 @@
-
-/* StudyFlow Supabase connection */
-const SUPABASE_URL = "https://vpkqhxzzqdlqaqvioxbd.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Gmho7VHOy9KRURyWFZRrLg_lyV238vM";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-
-const STORAGE_KEY = "studyflow.assignments.v1";
-const ACTIVITY_KEY = "studyflow.activity.v1";
-const $ = (selector, root = document) => root.querySelector(selector);
-const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const todayISO = () => {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-};
-const dateFromISO = value => value ? new Date(`${value}T12:00:00`) : null;
-const formatDate = value => {
-  const d = dateFromISO(value);
-  return d ? d.toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"}) : "No date";
-};
-const shortDate = value => {
-  const d = dateFromISO(value);
-  return d ? {month:d.toLocaleDateString(undefined,{month:"short"}), day:d.getDate()} : {month:"—",day:"—"};
-};
-const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const makeId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
 function loadJSON(key, fallback) {
   try { const parsed = JSON.parse(localStorage.getItem(key)); return parsed ?? fallback; }
   catch { return fallback; }
 }
+const isValidAssignment = item =>
+  item && typeof item === "object" &&
+  typeof item.id === "string" &&
+  typeof item.title === "string" &&
+  typeof item.subject === "string" &&
+  typeof item.dueDate === "string" &&
+  ["Pending", "Completed"].includes(item.status);
+
 let assignments = loadJSON(STORAGE_KEY, []);
+if (!Array.isArray(assignments)) assignments = [];
+assignments = assignments.filter(isValidAssignment);
+
 let activities = loadJSON(ACTIVITY_KEY, []);
+if (!Array.isArray(activities)) activities = [];
+activities = activities.filter(item =>
+  item && typeof item === "object" &&
+  typeof item.message === "string" &&
+  typeof item.at === "string"
+).slice(0, 12);
 let toastTimer;
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(assignments));
-  localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activities.slice(0, 12)));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(assignments));
+    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activities.slice(0, 12)));
+    return true;
+  } catch (error) {
+    console.error("StudyFlow could not save local data:", error);
+    toast("Unable to save changes. Check your browser storage settings.");
+    return false;
+  }
 }
 function logActivity(message, type = "added") {
   activities.unshift({id:makeId(), message, type, at:new Date().toISOString()});
@@ -129,11 +124,21 @@ function renderUpcoming() {
     `<div class="empty-state"><span>✓</span><h3>You're all caught up</h3><p>Add an assignment whenever you're ready.</p></div>`;
 }
 function subjectStats() {
-  return getSubjects().map(subject => {
-    const tasks = assignments.filter(a => a.subject === subject);
-    const done = tasks.filter(a => a.status === "Completed").length;
-    return {subject, total:tasks.length, done, percent:tasks.length ? Math.round(done/tasks.length*100) : 0};
-  });
+  const stats = new Map();
+  for (const task of assignments) {
+    const subject = String(task.subject || "").trim();
+    if (!subject) continue;
+    let item = stats.get(subject);
+    if (!item) {
+      item = { subject, total: 0, done: 0, percent: 0 };
+      stats.set(subject, item);
+    }
+    item.total++;
+    if (task.status === "Completed") item.done++;
+  }
+  return [...stats.values()]
+    .map(item => ({ ...item, percent: Math.round(item.done / item.total * 100) }))
+    .sort((a, b) => a.subject.localeCompare(b.subject));
 }
 function renderSubjectOverview() {
   const icons = ["▦","⌘","▤","✧","◉","▧"];
@@ -283,6 +288,20 @@ function showAuthMessage(message) {
   if (authMessage) authMessage.textContent = message;
 }
 
+async function runAuthAction(button, pendingMessage, action) {
+  if (button?.disabled) return;
+  if (button) button.disabled = true;
+  showAuthMessage(pendingMessage);
+  try {
+    await action();
+  } catch (error) {
+    console.error("StudyFlow authentication error:", error);
+    showAuthMessage("Something went wrong. Check your connection and try again.");
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
 function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
@@ -317,75 +336,55 @@ function updateAuthUI(user) {
       : "You are not signed in.";
   }
 }
+
 // Log in existing users
 authForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-
-  const email = document.getElementById("auth-email").value.trim();
-  const password = document.getElementById("auth-password").value;
-
-  showAuthMessage("Signing in...");
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
+  await runAuthAction(loginButton, "Signing in...", async () => {
+    const email = document.getElementById("auth-email").value.trim();
+    const password = document.getElementById("auth-password").value;
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    updateAuthUI(data.user);
+    showAuthMessage("Login successful!");
   });
-
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
-
-  updateAuthUI(data.user);
-  showAuthMessage("Login successful!");
 });
 
 // Create new accounts
 signupButton?.addEventListener("click", async () => {
-  const email = document.getElementById("auth-email").value.trim();
-  const password = document.getElementById("auth-password").value;
-
-  if (!email || password.length < 6) {
-    showAuthMessage("Enter your email and a password of at least 6 characters.");
+  const emailInput = document.getElementById("auth-email");
+  const passwordInput = document.getElementById("auth-password");
+  if (!emailInput.reportValidity()) return;
+  if (passwordInput.value.length < 6) {
+    showAuthMessage("Enter a password of at least 6 characters.");
+    passwordInput.focus();
     return;
   }
 
-  showAuthMessage("Creating your account...");
-
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: window.location.origin
+  await runAuthAction(signupButton, "Creating your account...", async () => {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email: emailInput.value.trim(),
+      password: passwordInput.value,
+      options: { emailRedirectTo: window.location.origin }
+    });
+    if (error) throw error;
+    if (data.session) {
+      updateAuthUI(data.user);
+      showAuthMessage("Account created successfully!");
+    } else {
+      showAuthMessage("Account created. Check your email to confirm your address, then log in.");
     }
   });
-
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
-
-  if (data.session) {
-    updateAuthUI(data.user);
-    showAuthMessage("Account created successfully!");
-  } else {
-    showAuthMessage(
-      "Account created. Check your email to confirm your address, then log in."
-    );
-  }
 });
 
 // Log out
 logoutButton?.addEventListener("click", async () => {
-  const { error } = await supabaseClient.auth.signOut();
-
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
-
-  updateAuthUI(null);
-  showAuthMessage("You have logged out.");
+  await runAuthAction(logoutButton, "Signing out...", async () => {
+    const { error } = await supabaseClient.auth.signOut();
+    if (error) throw error;
+    updateAuthUI(null);
+    showAuthMessage("You have logged out.");
+  });
 });
 
 // Restore the existing login session on page load
@@ -405,3 +404,9 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {
   updateAuthUI(session?.user ?? null);
 });
 
+
+
+
+
+
+3. style.css
