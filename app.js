@@ -266,25 +266,77 @@ function renderCalendar() {
 function renderAll() { renderDashboard(); renderAssignments(); if ($("#subjectsView").classList.contains("active-view")) renderSubjectsPage(); if ($("#calendarView").classList.contains("active-view")) renderCalendar(); }
 function findTask(id) { return assignments.find(a => a.id === id); }
 
-$("#assignmentForm").addEventListener("submit", event => {
+
+$("#assignmentForm").addEventListener("submit", async event => {
   event.preventDefault();
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !authData.user) {
+    toast("Please log in before saving assignments.");
+    return;
+  }
+
+  const user = authData.user;
   const id = $("#assignmentId").value;
   const title = $("#titleInput").value.trim();
   const subject = $("#subjectInput").value.trim();
   const dueDate = $("#dueInput").value;
-  if (!title || !subject || !dueDate) { toast("Please fill in the title, subject, and due date."); return; }
-  const data = {id:id || makeId(), title, subject, dueDate, priority:$("#priorityInput").value, status:$("#statusInput").value, notes:$("#notesInput").value.trim()};
-  if (id) {
-    assignments = assignments.map(a => a.id === id ? data : a);
-    logActivity(`Updated ${title}`, "updated");
-    toast("Assignment updated.");
-  } else {
-    assignments.push(data);
-    logActivity(`Added ${title}`, "added");
-    toast("Assignment added.");
+  const priority = $("#priorityInput").value;
+  const status = $("#statusInput").value;
+  const notes = $("#notesInput").value.trim();
+
+  if (!title || !subject || !dueDate) {
+    toast("Please fill in the title, subject, and due date.");
+    return;
   }
-  save(); closeDialog(); renderAll();
+
+  const fields = {
+    title,
+    subject,
+    due_date: dueDate,
+    priority,
+    completed: status === "Completed",
+    notes
+  };
+
+  const { data, error } = id
+    ? await supabaseClient
+        .from("assignments")
+        .update(fields)
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select()
+        .single()
+    : await supabaseClient
+        .from("assignments")
+        .insert({ ...fields, user_id: user.id })
+        .select()
+        .single();
+
+  if (error) {
+    toast("Could not save assignment: " + error.message);
+    return;
+  }
+
+  const savedTask = fromDatabase(data);
+
+  if (id) {
+    assignments = assignments.map(task =>
+      task.id === id ? savedTask : task
+    );
+    logActivity(`Updated ${title}`, "updated");
+  } else {
+    assignments.push(savedTask);
+    logActivity(`Added ${title}`, "added");
+  }
+
+  closeDialog();
+  renderAll();
+  toast(id ? "Assignment updated." : "Assignment added.");
 });
+
 $("#closeDialog").addEventListener("click", closeDialog);
 $("#cancelDialog").addEventListener("click", closeDialog);
 $("#assignmentDialog").addEventListener("click", event => { if (event.target === $("#assignmentDialog")) closeDialog(); });
