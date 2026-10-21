@@ -347,20 +347,83 @@ $("#mobileMenu").addEventListener("click", () => $("#sidebar").classList.toggle(
 $("#searchInput").addEventListener("input", renderAssignments);
 $("#statusFilter").addEventListener("change", renderAssignments);
 $("#subjectFilter").addEventListener("change", renderAssignments);
-document.addEventListener("click", event => {
+
+document.addEventListener("click", async event => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
+
   const task = findTask(button.dataset.id);
   if (!task) return;
-  if (button.dataset.action === "edit") openDialog(task);
-  if (button.dataset.action === "complete") {
-    task.status = "Completed"; save(); logActivity(`Completed ${task.title}`, "completed"); renderAll(); toast("Great work — assignment completed!");
+
+  if (button.dataset.action === "edit") {
+    openDialog(task);
+    return;
   }
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !authData.user) {
+    toast("Please log in before changing assignments.");
+    return;
+  }
+
+  const userId = authData.user.id;
+
+  if (button.dataset.action === "complete") {
+    const { data, error } = await supabaseClient
+      .from("assignments")
+      .update({ completed: true })
+      .eq("id", task.id)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (error) {
+      toast("Could not complete assignment: " + error.message);
+      return;
+    }
+
+    const updatedTask = fromDatabase(data);
+    assignments = assignments.map(item =>
+      item.id === task.id ? updatedTask : item
+    );
+
+    logActivity(`Completed ${task.title}`, "completed");
+    renderAll();
+    toast("Great work — assignment completed!");
+    return;
+  }
+
   if (button.dataset.action === "delete") {
-    if (!confirm(`Delete "${task.title}"? This cannot be undone.`)) return;
-    assignments = assignments.filter(a => a.id !== task.id); save(); logActivity(`Deleted ${task.title}`, "warning"); renderAll(); toast("Assignment deleted.");
+    if (!confirm(`Delete "${task.title}"? This cannot be undone.`)) {
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from("assignments")
+      .delete()
+      .eq("id", task.id)
+      .eq("user_id", userId)
+      .select("id");
+
+    if (error) {
+      toast("Could not delete assignment: " + error.message);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      toast("Assignment was not deleted. Please refresh and try again.");
+      return;
+    }
+
+    assignments = assignments.filter(item => item.id !== task.id);
+    logActivity(`Deleted ${task.title}`, "warning");
+    renderAll();
+    toast("Assignment deleted.");
   }
 });
+
 function toggleTheme() {
   document.body.classList.toggle("dark");
   localStorage.setItem("studyflow.theme", document.body.classList.contains("dark") ? "dark" : "light");
@@ -530,5 +593,21 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
 // Update the interface when authentication changes
 supabaseClient.auth.onAuthStateChange((_event, session) => {
   updateAuthUI(session?.user ?? null);
+
+  if (session?.user) {
+    setTimeout(() => {
+      loadAssignmentsFromSupabase();
+    }, 0);
+  } else {
+    assignments = [];
+    renderAll();
+  }
+});
+  if (data.session?.user) {
+  await loadAssignmentsFromSupabase();
+} else {
+  assignments = [];
+  renderAll();
+}
 });
 
