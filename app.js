@@ -33,19 +33,71 @@ function loadJSON(key, fallback) {
   try { const parsed = JSON.parse(localStorage.getItem(key)); return parsed ?? fallback; }
   catch { return fallback; }
 }
-let assignments = loadJSON(STORAGE_KEY, []);
+
+let assignments = [];
 let activities = loadJSON(ACTIVITY_KEY, []);
 let toastTimer;
 
+// Keep activity history in the browser, but not assignments.
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(assignments));
-  localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activities.slice(0, 12)));
+  localStorage.setItem(
+    ACTIVITY_KEY,
+    JSON.stringify(activities.slice(0, 12))
+  );
 }
+
 function logActivity(message, type = "added") {
-  activities.unshift({id:makeId(), message, type, at:new Date().toISOString()});
+  activities.unshift({
+    id: makeId(),
+    message,
+    type,
+    at: new Date().toISOString()
+  });
   activities = activities.slice(0, 12);
   save();
 }
+
+// Convert a database row to the format used by the dashboard.
+function fromDatabase(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    subject: row.subject,
+    dueDate: row.due_date,
+    priority: row.priority || "Medium",
+    status: row.completed ? "Completed" : "Pending",
+    notes: row.notes || ""
+  };
+}
+
+// Load only the signed-in user's assignments.
+// Supabase RLS remains responsible for restricting access.
+async function loadAssignmentsFromSupabase() {
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !authData.user) {
+    assignments = [];
+    renderAll();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("assignments")
+    .select("*")
+    .order("due_date", { ascending: true });
+
+  if (error) {
+    assignments = [];
+    renderAll();
+    toast("Could not load assignments: " + error.message);
+    return;
+  }
+
+  assignments = (data || []).map(fromDatabase);
+  renderAll();
+}
+
 function isOverdue(task) { return task.status !== "Completed" && task.dueDate < todayISO(); }
 function taskStatus(task) { return task.status === "Completed" ? "Completed" : isOverdue(task) ? "Overdue" : "Pending"; }
 function statusClass(status) { return `status-${status.toLowerCase()}`; }
