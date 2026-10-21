@@ -612,11 +612,4 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {
     renderAll();
   }
 });
-  if (data.session?.user) {
-  await loadAssignmentsFromSupabase();
-} else {
-  assignments = [];
-  renderAll();
-}
-});
-
+ 
