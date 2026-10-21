@@ -578,7 +578,8 @@ async function handleLogout() {
 logoutButton?.addEventListener("click", handleLogout);
 dashboardLogoutButton?.addEventListener("click", handleLogout);
 
-// Restore the existing login session on page load
+
+ // Restore the existing login session on page load
 (async () => {
   const { data, error } = await supabaseClient.auth.getSession();
 
@@ -588,7 +589,15 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
   }
 
   updateAuthUI(data.session?.user ?? null);
+
+  if (data.session?.user) {
+    await loadAssignmentsFromSupabase();
+  } else {
+    assignments = [];
+    renderAll();
+  }
 })();
+
 
 // Update the interface when authentication changes
 supabaseClient.auth.onAuthStateChange((_event, session) => {
