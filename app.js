@@ -351,6 +351,7 @@ $("#subjectFilter").addEventListener("change", renderAssignments);
 document.addEventListener("click", async event => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
+  console.log("Original handler detected:", button.dataset.action, button.dataset.id);
 
   const task = findTask(button.dataset.id);
   if (!task) return;
