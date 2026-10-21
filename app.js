@@ -354,9 +354,16 @@ document.addEventListener("click", async event => {
   console.log("Original handler detected:", button.dataset.action, button.dataset.id);
 
   const task = findTask(button.dataset.id);
-  if (!task) return;
+
+console.log("Task lookup result:", task);
+
+if (!task) {
+  console.log("STOPPED: No matching assignment found.");
+  return;
+}
 
   if (button.dataset.action === "edit") {
+    console.log("EDIT action reached");
     openDialog(task);
     return;
   }
@@ -397,6 +404,7 @@ document.addEventListener("click", async event => {
   }
 
   if (button.dataset.action === "delete") {
+    console.log("DELETE action reached");
     if (!confirm(`Delete "${task.title}"? This cannot be undone.`)) {
       return;
     }
