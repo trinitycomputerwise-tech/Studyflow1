@@ -603,7 +603,6 @@ async function checkPasswordResetLink() {
   resetPasswordSection.hidden = false;
   document.getElementById("auth-section").hidden = true;
 }
-
 resetPasswordForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -697,7 +696,11 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
 
 
 // Update the interface when authentication changes
-supabaseClient.auth.onAuthStateChange((_event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
+   if (event === "PASSWORD_RECOVERY") {
+    document.getElementById("auth-section").hidden = true;
+    document.getElementById("reset-password-section").hidden = false;
+  }
   updateAuthUI(session?.user ?? null);
 
   if (session?.user) {
