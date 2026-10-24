@@ -471,9 +471,11 @@ if (authSection) {
     Boolean(user) || !document.getElementById("reset-password-section")?.hidden;
 }
 
-  if (dashboard) {
-    dashboard.hidden = !user;
-  }
+ if (dashboard) {
+  const resetSection = document.getElementById("reset-password-section");
+  const isResettingPassword = resetSection && !resetSection.hidden;
+  dashboard.hidden = !user || isResettingPassword;
+}
 
   if (authForm) {
     authForm.hidden = Boolean(user);
