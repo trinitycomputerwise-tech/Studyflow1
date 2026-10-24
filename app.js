@@ -579,6 +579,66 @@ forgotPasswordButton?.addEventListener("click", async () => {
   showAuthMessage("If an account exists for this email, a password reset link will be sent. Please check your inbox.");
 });
 
+const resetPasswordSection = document.getElementById("reset-password-section");
+const resetPasswordForm = document.getElementById("reset-password-form");
+const resetPasswordMessage = document.getElementById("reset-password-message");
+
+// Show the password form when Supabase returns the user from a reset link
+async function checkPasswordResetLink() {
+  const hash = window.location.hash;
+  const params = new URLSearchParams(hash.replace(/^#/, ""));
+  const isRecovery = params.get("type") === "recovery";
+
+  if (!isRecovery) return;
+
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error || !data.session) {
+    resetPasswordMessage.textContent =
+      "This reset link is invalid or has expired. Please request a new one.";
+    resetPasswordSection.hidden = false;
+    return;
+  }
+
+  resetPasswordSection.hidden = false;
+  document.getElementById("auth-section").hidden = true;
+}
+
+resetPasswordForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const password = document.getElementById("new-password").value;
+  const confirmPassword = document.getElementById("confirm-new-password").value;
+
+  if (password.length < 6) {
+    resetPasswordMessage.textContent =
+      "Your password must be at least 6 characters long.";
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    resetPasswordMessage.textContent = "The passwords do not match.";
+    return;
+  }
+
+  resetPasswordMessage.textContent = "Updating your password...";
+
+  const { error } = await supabaseClient.auth.updateUser({ password });
+
+  if (error) {
+    resetPasswordMessage.textContent = error.message;
+    return;
+  }
+
+  resetPasswordMessage.textContent =
+    "Password updated successfully! You can now log in with your new password.";
+
+  resetPasswordForm.reset();
+});
+
+checkPasswordResetLink();
+
+
 
  // Log out
 const dashboardLogoutButton =
