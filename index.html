@@ -45,6 +45,38 @@
     <p id="auth-message" role="status" aria-live="polite"></p>
     <p id="auth-user"></p>
   </section>
+  
+  <section id="reset-password-section" hidden>
+    <h2>Reset your password</h2>
+    <p>Enter your new password below.</p>
+
+    <form id="reset-password-form">
+      <label for="new-password">New password</label>
+      <input
+        id="new-password"
+        type="password"
+        autocomplete="new-password"
+        minlength="6"
+        placeholder="At least 6 characters"
+        required
+      />
+
+      <label for="confirm-new-password">Confirm new password</label>
+      <input
+        id="confirm-new-password"
+        type="password"
+        autocomplete="new-password"
+        minlength="6"
+        placeholder="Enter your new password again"
+        required
+      />
+
+      <button type="submit">Save new password</button>
+    </form>
+
+    <p id="reset-password-message" role="status" aria-live="polite"></p>
+  </section>
+
 
   <div class="app-shell" id="dashboard-content" hidden>
     <aside class="sidebar" id="sidebar">
