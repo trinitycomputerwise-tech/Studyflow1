@@ -453,6 +453,7 @@ renderAll();
 const authForm = document.getElementById("auth-form");
 const signupButton = document.getElementById("signup-button");
 const loginButton = document.getElementById("login-button");
+const forgotPasswordButton = document.getElementById("forgot-password-button");
 const logoutButton = document.getElementById("logout-button");
 const authMessage = document.getElementById("auth-message");
 const authUser = document.getElementById("auth-user");
@@ -551,6 +552,31 @@ signupButton?.addEventListener("click", async () => {
       "Account created. Check your email to confirm your address, then log in."
     );
   }
+});
+
+
+ // Send password reset email
+forgotPasswordButton?.addEventListener("click", async () => {
+  const email = document.getElementById("auth-email").value.trim();
+
+  if (!email) {
+    showAuthMessage("Enter your email address first, then click Forgot password?");
+    document.getElementById("auth-email").focus();
+    return;
+  }
+
+  showAuthMessage("Sending password reset email...");
+
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin
+  });
+
+  if (error) {
+    showAuthMessage(error.message);
+    return;
+  }
+
+  showAuthMessage("If an account exists for this email, a password reset link will be sent. Please check your inbox.");
 });
 
 
