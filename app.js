@@ -697,13 +697,15 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
 
 
 // Update the interface when authentication changes
+
 supabaseClient.auth.onAuthStateChange((event, session) => {
-   if (event === "PASSWORD_RECOVERY") {
-  document.getElementById("auth-section").hidden = true;
-  document.getElementById("reset-password-section").hidden = false;
-  document.getElementById("dashboardView").classList.remove("active-view");
-}
   updateAuthUI(session?.user ?? null);
+
+  if (event === "PASSWORD_RECOVERY") {
+    document.getElementById("auth-section").hidden = true;
+    document.getElementById("reset-password-section").hidden = false;
+    document.getElementById("dashboardView").classList.remove("active-view");
+  }
 
   if (session?.user) {
     setTimeout(() => {
@@ -714,4 +716,3 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     renderAll();
   }
 });
- 
