@@ -48,3 +48,23 @@
     display: inline-flex;
   }
 }
+/* Assignment deadline reminder colors */
+.reminder-overdue {
+  color: #d92d20;
+}
+
+.reminder-today {
+  color: #c77700;
+}
+
+.reminder-tomorrow {
+  color: #b7791f;
+}
+
+.reminder-upcoming {
+  color: #16803c;
+}
+
+.reminder-completed {
+  color: #64748b;
+}
