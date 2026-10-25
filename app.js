@@ -43,6 +43,22 @@ function getDeadlineReminder(task) {
 
   return `<span class="reminder-upcoming">Due in ${daysUntilDue} days</span>`;
 }
+async function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    alert("Your browser does not support notifications.");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+
+  if (permission === "granted") {
+    new Notification("StudyFlow notifications enabled", {
+      body: "You'll be able to receive assignment deadline reminders."
+    });
+  } else {
+    alert("Notifications were not enabled. You can allow them in your browser settings.");
+  }
+}
 const dateFromISO = value => value ? new Date(`${value}T12:00:00`) : null;
 const formatDate = value => {
   const d = dateFromISO(value);
