@@ -48,10 +48,14 @@ async function requestNotificationPermission() {
     alert("Your browser does not support notifications.");
     return;
   }
-  document
-  .querySelector("#enableNotifications")
-  ?.addEventListener("click", requestNotificationPermission);
-
+  document.querySelector("#enableNotifications")?.addEventListener("click", async () => {
+  try {
+    await requestNotificationPermission();
+  } catch (error) {
+    console.error("Failed to enable notifications:", error);
+    alert("Could not enable notifications. Please check the browser Console.");
+  }
+});
   const permission = await Notification.requestPermission();
 
   if (permission === "granted") {
