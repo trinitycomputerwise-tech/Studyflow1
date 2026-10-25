@@ -20,7 +20,7 @@ const todayISO = () => {
 
 function getDeadlineReminder(task) {
   if (task.status === "Completed") {
-    return "Completed";
+    return '<span class="reminder-completed">Completed</span>';
   }
 
   const today = new Date(todayISO() + "T00:00:00");
@@ -29,10 +29,19 @@ function getDeadlineReminder(task) {
     (dueDate - today) / (1000 * 60 * 60 * 24)
   );
 
-  if (daysUntilDue < 0) return "Overdue";
-  if (daysUntilDue === 0) return "Due today";
-  if (daysUntilDue === 1) return "Due tomorrow";
-  return `Due in ${daysUntilDue} days`;
+  if (daysUntilDue < 0) {
+    return '<span class="reminder-overdue">Overdue</span>';
+  }
+
+  if (daysUntilDue === 0) {
+    return '<span class="reminder-today">Due today</span>';
+  }
+
+  if (daysUntilDue === 1) {
+    return '<span class="reminder-tomorrow">Due tomorrow</span>';
+  }
+
+  return `<span class="reminder-upcoming">Due in ${daysUntilDue} days</span>`;
 }
 const dateFromISO = value => value ? new Date(`${value}T12:00:00`) : null;
 const formatDate = value => {
@@ -250,7 +259,7 @@ function renderAssignments() {
       <td>${escapeHTML(a.subject)}</td>
       <td>
          ${escapeHTML(formatDate(a.dueDate))}
-         <div class="table-sub">${escapeHTML(getDeadlineReminder(a))}</div>
+         <div class="table-sub">${getDeadlineReminder(a)}</div>
       </td>
       <td><span class="priority-pill ${priorityClass(a.priority)}">${escapeHTML(a.priority)}</span></td>
       <td><span class="status-pill ${statusClass(currentStatus)}">${currentStatus}</span></td>
