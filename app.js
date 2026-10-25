@@ -48,6 +48,9 @@ async function requestNotificationPermission() {
     alert("Your browser does not support notifications.");
     return;
   }
+  document
+  .querySelector("#enableNotifications")
+  ?.addEventListener("click", requestNotificationPermission);
 
   const permission = await Notification.requestPermission();
 
