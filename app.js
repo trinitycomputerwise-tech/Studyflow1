@@ -19,34 +19,47 @@ const todayISO = () => {
 };
 
 
+
 function checkAssignmentNotifications() {
   if (!("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
   const today = todayISO();
+  const todayDate = new Date(today + "T00:00:00");
 
   assignments.forEach(task => {
     if (task.status === "Completed" || !task.dueDate) return;
 
     const dueDate = new Date(task.dueDate + "T00:00:00");
-    const todayDate = new Date(today + "T00:00:00");
     const daysUntilDue = Math.round(
       (dueDate - todayDate) / (1000 * 60 * 60 * 24)
     );
 
-    if (daysUntilDue < 0 || daysUntilDue === 0 || daysUntilDue === 1) {
-      const message = daysUntilDue < 0
-        ? "This assignment is overdue."
-        : daysUntilDue === 0
-          ? "This assignment is due today."
-          : "This assignment is due tomorrow.";
+    if (daysUntilDue < 0 || daysUntilDue > 1) return;
 
+    const reminderKey =
+      `studyflow-reminder-${task.id}-${today}-${daysUntilDue}`;
+
+    if (localStorage.getItem(reminderKey)) return;
+
+    const message = daysUntilDue < 0
+      ? "This assignment is overdue."
+      : daysUntilDue === 0
+        ? "This assignment is due today."
+        : "This assignment is due tomorrow.";
+
+    try {
       new Notification(task.title, {
         body: `${task.subject}: ${message}`
       });
+
+      localStorage.setItem(reminderKey, "sent");
+    } catch (error) {
+      console.error("StudyFlow reminder error:", error);
     }
   });
 }
+
 
 function getDeadlineReminder(task) {
   if (task.status === "Completed") {
