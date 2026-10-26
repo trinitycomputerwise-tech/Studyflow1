@@ -1076,8 +1076,9 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
 
   updateAuthUI(data.session?.user ?? null);
 
-  if (data.session?.user) {
-    await loadAssignmentsFromSupabase();
+ if (data.session?.user) {
+  await loadAssignmentsFromSupabase();
+  await loadTutoringData();
   } else {
     assignments = [];
     renderAll();
