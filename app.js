@@ -216,6 +216,209 @@ renderAll();
 checkAssignmentNotifications();
 }
 
+async function loadTutoringData() {
+  const message = document.getElementById("tutorProfileMessage");
+  const directory = document.getElementById("tutorDirectory");
+  const requests = document.getElementById("tutoringRequests");
+
+  if (!directory || !requests) return;
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !authData.user) {
+    directory.textContent = "Please sign in to view tutors.";
+    requests.textContent = "Please sign in to view tutoring requests.";
+    return;
+  }
+
+  const { data: tutors, error: tutorError } = await supabaseClient
+    .from("tutor_profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (tutorError) {
+    directory.textContent = "Could not load tutors: " + tutorError.message;
+  } else if (!tutors || tutors.length === 0) {
+    directory.textContent = "No tutor profiles yet. Be the first to register!";
+  } else {
+    directory.replaceChildren();
+
+    tutors.forEach(tutor => {
+      const card = document.createElement("article");
+      card.className = "panel";
+
+      const heading = document.createElement("h3");
+      heading.textContent = tutor.display_name;
+
+      const subjects = document.createElement("p");
+      subjects.textContent = "Subjects: " + (tutor.subjects || []).join(", ");
+
+      const bio = document.createElement("p");
+      bio.textContent = tutor.bio || "No biography provided.";
+
+      const experience = document.createElement("p");
+      experience.textContent = "Experience: " + (tutor.experience || "Not specified");
+
+      const availability = document.createElement("p");
+      availability.textContent = "Availability: " + (tutor.availability || "Not specified");
+
+      card.append(heading, subjects, bio, experience, availability);
+
+      if (tutor.id !== authData.user.id) {
+        const form = document.createElement("form");
+
+        const subjectLabel = document.createElement("label");
+        subjectLabel.textContent = "Subject ";
+        const subjectInput = document.createElement("input");
+        subjectInput.required = true;
+        subjectInput.maxLength = 100;
+        subjectInput.placeholder = "Subject you need help with";
+        subjectLabel.append(subjectInput);
+
+        const dateLabel = document.createElement("label");
+        dateLabel.textContent = "Preferred date ";
+        const dateInput = document.createElement("input");
+        dateInput.type = "date";
+        dateInput.min = new Date().toISOString().slice(0, 10);
+        dateLabel.append(dateInput);
+
+        const timeLabel = document.createElement("label");
+        timeLabel.textContent = "Preferred time ";
+        const timeInput = document.createElement("input");
+        timeInput.placeholder = "e.g. 4 PM";
+        timeInput.maxLength = 80;
+        timeLabel.append(timeInput);
+
+        const messageLabel = document.createElement("label");
+        messageLabel.textContent = "Message ";
+        const messageInput = document.createElement("textarea");
+        messageInput.maxLength = 1000;
+        messageInput.placeholder = "What would you like help with?";
+        messageLabel.append(messageInput);
+
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.className = "primary-button";
+        submit.textContent = "Request tutoring";
+
+        form.append(subjectLabel, dateLabel, timeLabel, messageLabel, submit);
+
+        form.addEventListener("submit", async event => {
+          event.preventDefault();
+          submit.disabled = true;
+
+          const { error } = await supabaseClient
+            .from("tutoring_requests")
+            .insert({
+              student_id: authData.user.id,
+              tutor_id: tutor.id,
+              subject: subjectInput.value.trim(),
+              requested_date: dateInput.value || null,
+              requested_time: timeInput.value.trim(),
+              message: messageInput.value.trim(),
+              status: "Pending"
+            });
+
+          submit.disabled = false;
+
+          if (error) {
+            alert("Could not send request: " + error.message);
+            return;
+          }
+
+          alert("Tutoring request sent!");
+          await loadTutoringData();
+        });
+
+        card.append(form);
+      }
+
+      directory.append(card);
+    });
+  }
+
+  const { data: ownProfile, error: ownProfileError } = await supabaseClient
+    .from("tutor_profiles")
+    .select("*")
+    .eq("id", authData.user.id)
+    .maybeSingle();
+
+  if (ownProfileError) {
+    if (message) message.textContent = "Could not load your profile: " + ownProfileError.message;
+  } else if (ownProfile) {
+    document.getElementById("tutorDisplayName").value = ownProfile.display_name || "";
+    document.getElementById("tutorSubjects").value = (ownProfile.subjects || []).join(", ");
+    document.getElementById("tutorBio").value = ownProfile.bio || "";
+    document.getElementById("tutorAvailability").value = ownProfile.availability || "";
+  }
+
+  const { data: ownRequests, error: requestError } = await supabaseClient
+    .from("tutoring_requests")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (requestError) {
+    requests.textContent = "Could not load requests: " + requestError.message;
+    return;
+  }
+
+  requests.replaceChildren();
+
+  if (!ownRequests || ownRequests.length === 0) {
+    requests.textContent = "No tutoring requests yet.";
+    return;
+  }
+
+  ownRequests.forEach(request => {
+    const item = document.createElement("article");
+    item.className = "panel";
+
+    const title = document.createElement("h3");
+    title.textContent = request.subject;
+
+    const details = document.createElement("p");
+    details.textContent =
+      "Status: " + request.status +
+      " · Preferred date: " + (request.requested_date || "Not specified") +
+      " · Preferred time: " + (request.requested_time || "Not specified");
+
+    const note = document.createElement("p");
+    note.textContent = request.message || "No message provided.";
+
+    item.append(title, details, note);
+
+    if (request.tutor_id === authData.user.id && request.status === "Pending") {
+      ["Approved", "Rejected"].forEach(status => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "secondary-button";
+        button.textContent = status;
+
+        button.addEventListener("click", async () => {
+          const { error } = await supabaseClient
+            .from("tutoring_requests")
+            .update({ status })
+            .eq("id", request.id)
+            .eq("status", "Pending");
+
+          if (error) {
+            alert("Could not update request: " + error.message);
+            return;
+          }
+
+          await loadTutoringData();
+        });
+
+        item.append(button);
+      });
+    }
+
+    requests.append(item);
+  });
+}
+
+
 function isOverdue(task) { return task.status !== "Completed" && task.dueDate < todayISO(); }
 function taskStatus(task) { return task.status === "Completed" ? "Completed" : isOverdue(task) ? "Overdue" : "Pending"; }
 function statusClass(status) { return `status-${status.toLowerCase()}`; }
