@@ -198,6 +198,7 @@
         <section class="panel"><div id="calendarList" class="calendar-list"></div></section>
       </section>
       
+     
       <section class="view" id="tutoringView">
         <div class="page-intro">
           <div>
@@ -210,14 +211,62 @@
         <section class="panel">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">GET STARTED</p>
-              <h2>Welcome to tutoring</h2>
+              <p class="eyebrow">BECOME A TUTOR</p>
+              <h2>Create your tutor profile</h2>
             </div>
           </div>
-          <p class="muted">Students will be able to find tutors and request sessions here. Tutors will be able to create profiles and manage requests.</p>
-          <p>We’re setting up this service in stages.</p>
+
+          <form id="tutorProfileForm">
+            <label>
+              Display name
+              <input id="tutorDisplayName" type="text" maxlength="80" required placeholder="Your name">
+            </label>
+
+            <label>
+              Subjects you teach
+              <input id="tutorSubjects" type="text" maxlength="200" required placeholder="e.g. Mathematics, Physics, English">
+            </label>
+
+            <label>
+              About you and your experience
+              <textarea id="tutorBio" rows="3" maxlength="1000" required placeholder="Introduce yourself and describe your experience"></textarea>
+            </label>
+
+            <label>
+              Availability
+              <input id="tutorAvailability" type="text" maxlength="200" required placeholder="e.g. Weekdays after 4 PM">
+            </label>
+
+            <button type="submit" class="primary-button">Save tutor profile</button>
+            <p id="tutorProfileMessage" class="muted" role="status"></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">FIND SUPPORT</p>
+              <h2>Available tutors</h2>
+            </div>
+          </div>
+          <div id="tutorDirectory" class="content-grid">
+            <p class="muted">Tutor profiles will appear here.</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">YOUR SESSIONS</p>
+              <h2>Tutoring requests</h2>
+            </div>
+          </div>
+          <div id="tutoringRequests">
+            <p class="muted">Your tutoring requests will appear here.</p>
+          </div>
         </section>
       </section>
+
 
 
       <footer class="footer"><span>© <span id="year"></span> StudyFlow</span><span>Made for focused learning <b>•</b> Plan. Study. Achieve.</span></footer>
