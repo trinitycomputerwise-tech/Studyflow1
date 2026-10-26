@@ -48,22 +48,27 @@ async function requestNotificationPermission() {
     alert("Your browser does not support notifications.");
     return;
   }
-  document.querySelector("#enableNotifications")?.addEventListener("click", async () => {
-  try {
-    await requestNotificationPermission();
-  } catch (error) {
-    console.error("Failed to enable notifications:", error);
-    alert("Could not enable notifications. Please check the browser Console.");
+
+  let permission = Notification.permission;
+
+  if (permission === "default") {
+    permission = await Notification.requestPermission();
   }
-});
-  const permission = await Notification.requestPermission();
 
   if (permission === "granted") {
-    new Notification("StudyFlow notifications enabled", {
-      body: "You'll be able to receive assignment deadline reminders."
-    });
+    const notification = new Notification(
+      "StudyFlow notifications enabled",
+      {
+        body: "You'll be able to receive assignment deadline reminders."
+      }
+    );
+
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
   } else {
-    alert("Notifications were not enabled. You can allow them in your browser settings.");
+    alert("Notifications are blocked. Please check your browser settings.");
   }
 }
 const dateFromISO = value => value ? new Date(`${value}T12:00:00`) : null;
