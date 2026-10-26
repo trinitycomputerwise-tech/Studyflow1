@@ -210,7 +210,6 @@ async function loadAssignmentsFromSupabase() {
 renderAll();
 checkAssignmentNotifications();
 }
-}
 
 function isOverdue(task) { return task.status !== "Completed" && task.dueDate < todayISO(); }
 function taskStatus(task) { return task.status === "Completed" ? "Completed" : isOverdue(task) ? "Overdue" : "Pending"; }
