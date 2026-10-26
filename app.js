@@ -49,14 +49,30 @@ async function requestNotificationPermission() {
     return;
   }
 
-  document.querySelector("#enableNotifications")?.addEventListener("click", () => {
-  if (Notification.permission === "granted") {
-    new Notification("StudyFlow notifications enabled", {
-      body: "You'll be able to receive assignment deadline reminders."
-    });
-  } else {
-    requestNotificationPermission();
+  window.addEventListener("DOMContentLoaded", () => {
+  const enableButton = document.querySelector("#enableNotifications");
+
+  if (!enableButton) {
+    console.error("StudyFlow: Enable Notifications button not found.");
+    return;
   }
+
+  enableButton.addEventListener("click", async () => {
+    console.log("StudyFlow: Enable Notifications clicked.");
+
+    try {
+      await requestNotificationPermission();
+
+      if (Notification.permission === "granted") {
+        new Notification("StudyFlow notifications enabled", {
+          body: "You'll be able to receive assignment deadline reminders."
+        });
+      }
+    } catch (error) {
+      console.error("StudyFlow notification error:", error);
+      alert("Could not enable notifications. Please check your browser settings.");
+    }
+  });
 });
 
   let permission = Notification.permission;
