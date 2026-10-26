@@ -228,7 +228,7 @@ function toast(message) {
   toastTimer = setTimeout(() => node.classList.remove("show"), 2600);
 }
 function setView(view) {
-  const known = ["dashboard","assignments","subjects","calendar"];
+  const known = ["dashboard","assignments","subjects","calendar","tutoring"];
   if (!known.includes(view)) view = "dashboard";
   $$(".view").forEach(node => node.classList.toggle("active-view", node.id === `${view}View`));
   $$(".nav-item[data-view]").forEach(node => node.classList.toggle("active", node.dataset.view === view));
