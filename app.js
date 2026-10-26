@@ -60,6 +60,11 @@ function checkAssignmentNotifications() {
   });
 }
 
+setInterval(() => {
+  checkAssignmentNotifications();
+}, 5 * 60 * 1000);
+
+
 
 function getDeadlineReminder(task) {
   if (task.status === "Completed") {
