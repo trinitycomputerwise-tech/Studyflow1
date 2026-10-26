@@ -502,6 +502,7 @@ function setView(view) {
   if (view === "assignments") renderAssignments();
   if (view === "subjects") renderSubjectsPage();
   if (view === "calendar") renderCalendar();
+  if (view === "tutoring") loadTutoringData();
   window.scrollTo({top:0, behavior:"smooth"});
 }
 function openDialog(task = null) {
