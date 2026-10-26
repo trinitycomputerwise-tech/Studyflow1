@@ -418,6 +418,68 @@ async function loadTutoringData() {
   });
 }
 
+const tutorProfileForm = document.getElementById("tutorProfileForm");
+
+if (tutorProfileForm) {
+  tutorProfileForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const message = document.getElementById("tutorProfileMessage");
+    const submitButton = tutorProfileForm.querySelector('button[type="submit"]');
+
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    if (authError || !authData.user) {
+      message.textContent = "Please sign in before saving a tutor profile.";
+      return;
+    }
+
+    const displayName = document.getElementById("tutorDisplayName").value.trim();
+    const subjects = document.getElementById("tutorSubjects").value
+      .split(",")
+      .map(subject => subject.trim())
+      .filter(Boolean);
+    const bio = document.getElementById("tutorBio").value.trim();
+    const availability = document.getElementById("tutorAvailability").value.trim();
+
+    if (!displayName || subjects.length === 0 || !bio || !availability) {
+      message.textContent = "Please complete all tutor profile fields.";
+      return;
+    }
+
+    submitButton.disabled = true;
+    message.textContent = "Saving your profile...";
+
+    try {
+      const { error } = await supabaseClient
+        .from("tutor_profiles")
+        .upsert({
+          id: authData.user.id,
+          display_name: displayName,
+          subjects,
+          bio,
+          experience: bio,
+          availability
+        });
+
+      if (error) {
+        message.textContent = "Could not save profile: " + error.message;
+        return;
+      }
+
+      message.textContent = "Tutor profile saved successfully!";
+      await loadTutoringData();
+    } catch (error) {
+      message.textContent = "Could not save profile. Please try again.";
+      console.error("StudyFlow tutor profile error:", error);
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+}
+
+
 
 function isOverdue(task) { return task.status !== "Completed" && task.dueDate < todayISO(); }
 function taskStatus(task) { return task.status === "Completed" ? "Completed" : isOverdue(task) ? "Overdue" : "Pending"; }
