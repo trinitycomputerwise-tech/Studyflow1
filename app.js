@@ -206,8 +206,10 @@ async function loadAssignmentsFromSupabase() {
     return;
   }
 
-  assignments = (data || []).map(fromDatabase);
-  renderAll();
+ assignments = (data || []).map(fromDatabase);
+renderAll();
+checkAssignmentNotifications();
+}
 }
 
 function isOverdue(task) { return task.status !== "Completed" && task.dueDate < todayISO(); }
