@@ -43,37 +43,12 @@ function getDeadlineReminder(task) {
 
   return `<span class="reminder-upcoming">Due in ${daysUntilDue} days</span>`;
 }
+
 async function requestNotificationPermission() {
   if (!("Notification" in window)) {
     alert("Your browser does not support notifications.");
     return;
   }
-
-  window.addEventListener("DOMContentLoaded", () => {
-  const enableButton = document.querySelector("#enableNotifications");
-
-  if (!enableButton) {
-    console.error("StudyFlow: Enable Notifications button not found.");
-    return;
-  }
-
-  enableButton.addEventListener("click", async () => {
-    console.log("StudyFlow: Enable Notifications clicked.");
-
-    try {
-      await requestNotificationPermission();
-
-      if (Notification.permission === "granted") {
-        new Notification("StudyFlow notifications enabled", {
-          body: "You'll be able to receive assignment deadline reminders."
-        });
-      }
-    } catch (error) {
-      console.error("StudyFlow notification error:", error);
-      alert("Could not enable notifications. Please check your browser settings.");
-    }
-  });
-});
 
   let permission = Notification.permission;
 
@@ -97,6 +72,20 @@ async function requestNotificationPermission() {
     alert("Notifications are blocked. Please check your browser settings.");
   }
 }
+
+const enableButton = document.querySelector("#enableNotifications");
+
+if (enableButton) {
+  enableButton.addEventListener("click", async () => {
+    try {
+      await requestNotificationPermission();
+    } catch (error) {
+      console.error("StudyFlow notification error:", error);
+      alert("Could not enable notifications. Please check your browser settings.");
+    }
+  });
+}
+
 const dateFromISO = value => value ? new Date(`${value}T12:00:00`) : null;
 const formatDate = value => {
   const d = dateFromISO(value);
