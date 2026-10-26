@@ -1097,12 +1097,21 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     document.getElementById("dashboardView").classList.remove("active-view");
   }
 
-  if (session?.user) {
-    setTimeout(() => {
-      loadAssignmentsFromSupabase();
-    }, 0);
-  } else {
-    assignments = [];
-    renderAll();
-  }
+  
+if (session?.user) {
+  setTimeout(async () => {
+    await loadAssignmentsFromSupabase();
+    await loadTutoringData();
+  }, 0);
+} else {
+  assignments = [];
+  renderAll();
+
+  const directory = document.getElementById("tutorDirectory");
+  const requests = document.getElementById("tutoringRequests");
+
+  if (directory) directory.textContent = "Please sign in to view tutors.";
+  if (requests) requests.textContent = "Please sign in to view tutoring requests.";
+}
+
 });
