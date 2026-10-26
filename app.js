@@ -49,6 +49,16 @@ async function requestNotificationPermission() {
     return;
   }
 
+  document.querySelector("#enableNotifications")?.addEventListener("click", () => {
+  if (Notification.permission === "granted") {
+    new Notification("StudyFlow notifications enabled", {
+      body: "You'll be able to receive assignment deadline reminders."
+    });
+  } else {
+    requestNotificationPermission();
+  }
+});
+
   let permission = Notification.permission;
 
   if (permission === "default") {
