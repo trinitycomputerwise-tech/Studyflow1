@@ -878,8 +878,15 @@ if (authSection) {
   }
 
   if (logoutButton) {
-    logoutButton.hidden = !user;
-  }
+  logoutButton.hidden = !user;
+}
+
+const dashboardLogoutButton =
+  document.getElementById("dashboard-logout");
+
+if (dashboardLogoutButton) {
+  dashboardLogoutButton.hidden = !user;
+}
 
   if (authUser) {
     authUser.textContent = user
