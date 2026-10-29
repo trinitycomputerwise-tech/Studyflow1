@@ -84,3 +84,10 @@
 .reminder-completed {
   color: #64748b;
 }
+
+#dashboard-logout {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
