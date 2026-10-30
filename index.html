@@ -237,6 +237,18 @@
               Availability
               <input id="tutorAvailability" type="text" maxlength="200" required placeholder="e.g. Weekdays after 4 PM">
             </label>
+            
+            <label>
+              Price per session (₦)
+              <input
+                id="tutorSessionPrice"
+                type="number"
+                min="1"
+                step="1"
+                required
+                placeholder="e.g. 5000"
+              >
+            </label>
 
             <button type="submit" class="primary-button">Save tutor profile</button>
             <p id="tutorProfileMessage" class="muted" role="status"></p>
