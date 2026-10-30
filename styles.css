@@ -91,177 +91,178 @@
   opacity: 1 !important;
 }
 
-/* =================================
-   STUDYFLOW TUTORING DESIGN
-================================= */
+
+/* STUDYFLOW - MODERN BLUE TUTORING DESIGN */
 
 #tutoringView {
-  display: grid;
-  gap: 22px;
+  gap: 24px;
 }
 
 #tutoringView > .page-intro {
-  background: linear-gradient(120deg, #eaf2ff, #f5f0ff);
-  border: 1px solid #dce7ff;
-  border-radius: 18px;
-  padding: 30px;
-  margin: 6px 0 0;
+  background: linear-gradient(120deg, #eaf3ff, #f7faff);
+  border: 1px solid #d7e7ff;
+  border-radius: 20px;
+  padding: 34px;
+  box-shadow: 0 10px 30px rgba(40, 100, 190, 0.06);
 }
 
 #tutoringView > .page-intro h1 {
-  color: #245fc5;
-  font-size: 30px;
+  color: #1d56ad;
+  font-size: 32px;
+  letter-spacing: -1px;
 }
 
 #tutoringView > .panel {
-  border-radius: 17px;
-  padding: 25px;
-  box-shadow: 0 8px 25px #1b31500a;
+  background: #ffffff;
+  border: 1px solid #e2ebf7;
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: 0 8px 28px rgba(30, 70, 130, 0.06);
 }
 
 #tutoringView .panel-heading {
-  padding-bottom: 13px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid #e8eef7;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+#tutoringView .panel-heading h2 {
+  color: #1d3557;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+#tutoringView .eyebrow {
+  color: #3478d4;
+  letter-spacing: 1.5px;
 }
 
 #tutorProfileForm {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 #tutorProfileForm label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  color: #344967;
   font-size: 12px;
   font-weight: 700;
-  color: var(--text);
 }
 
 #tutorProfileForm input,
-#tutorProfileForm textarea {
-  width: 100%;
-  padding: 13px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 12px;
-  outline: none;
+#tutorProfileForm textarea,
+#tutorDirectory form input,
+#tutorDirectory form textarea {
+  background: #f8fbff;
+  border: 1px solid #dce7f5;
+  border-radius: 11px;
+  padding: 13px 14px;
+  color: #243b5a;
+  transition: border-color .2s, box-shadow .2s;
 }
 
 #tutorProfileForm input:focus,
-#tutorProfileForm textarea:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px #3478f618;
+#tutorProfileForm textarea:focus,
+#tutorDirectory form input:focus,
+#tutorDirectory form textarea:focus {
+  border-color: #4388ed;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(67, 136, 237, .12);
 }
 
-#tutorProfileForm label:nth-child(3),
-#tutorProfileForm label:nth-child(4),
 #tutorProfileForm button,
-#tutorProfileMessage {
-  grid-column: 1 / -1;
-}
-
-#tutorProfileForm textarea {
-  resize: vertical;
-}
-
-#tutorProfileForm button {
-  justify-self: start;
-  min-width: 190px;
+#tutorDirectory form button {
+  border-radius: 10px;
+  padding: 12px 19px;
+  font-weight: 700;
+  box-shadow: 0 5px 12px rgba(52, 120, 246, .16);
 }
 
 #tutorDirectory.content-grid {
-  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 17px;
+  gap: 20px;
 }
 
 #tutorDirectory > .panel {
-  padding: 21px;
-  border-radius: 15px;
-  border-top: 3px solid var(--blue);
-  box-shadow: 0 7px 22px #1b31500b;
+  background: linear-gradient(160deg, #ffffff, #f8fbff);
+  border: 1px solid #dce8f7;
+  border-top: 4px solid #4388ed;
+  border-radius: 16px;
+  padding: 23px;
+  box-shadow: 0 7px 22px rgba(30, 70, 130, .07);
+  transition: transform .2s, box-shadow .2s;
+}
+
+#tutorDirectory > .panel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(30, 70, 130, .12);
 }
 
 #tutorDirectory > .panel h3 {
-  font-size: 17px;
-  margin: 0 0 13px;
+  color: #1d56ad;
+  font-size: 18px;
+  margin-bottom: 12px;
 }
 
 #tutorDirectory > .panel p {
+  color: #62738d;
   font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
+  line-height: 1.8;
 }
 
 #tutorDirectory > .panel form {
-  display: grid;
-  gap: 11px;
-  border-top: 1px solid var(--line);
-  margin-top: 17px;
-  padding-top: 17px;
+  border-top: 1px solid #e2ebf7;
+  margin-top: 19px;
+  padding-top: 18px;
 }
 
 #tutorDirectory > .panel form label {
-  display: grid;
-  gap: 7px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-#tutorDirectory > .panel form input,
-#tutorDirectory > .panel form textarea {
-  width: 100%;
-  padding: 11px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: var(--bg);
-  color: var(--text);
+  color: #344967;
 }
 
 #tutoringRequests > .panel {
-  border-radius: 13px;
-  margin-bottom: 13px;
-  padding: 19px;
+  background: #ffffff;
+  border: 1px solid #dce8f7;
+  border-left: 4px solid #4388ed;
+  border-radius: 14px;
+  padding: 21px;
+  margin-bottom: 15px;
+  box-shadow: 0 5px 18px rgba(30, 70, 130, .05);
 }
 
 #tutoringRequests > .panel h3 {
-  margin-top: 0;
-  color: var(--blue);
+  color: #1d56ad;
+  font-size: 16px;
 }
 
 #tutoringRequests > .panel p {
+  color: #62738d;
+  line-height: 1.8;
+}
+
+#tutoringRequests > .panel button {
+  margin: 6px 7px 0 0;
+  border-radius: 9px;
+  padding: 10px 16px;
+}
+
+#tutorProfileMessage {
   font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
+  font-weight: 600;
 }
 
 @media (max-width: 700px) {
-  #tutorProfileForm,
-  #tutorDirectory.content-grid {
-    grid-template-columns: 1fr;
-  }
-
   #tutoringView > .page-intro {
-    padding: 22px;
+    padding: 23px;
   }
 
   #tutoringView > .page-intro h1 {
-    font-size: 24px;
+    font-size: 25px;
   }
 
   #tutoringView > .panel {
-    padding: 17px;
+    padding: 18px;
   }
 
-  #tutorProfileForm label,
-  #tutorProfileForm button,
-  #tutorProfileMessage {
-    grid-column: 1;
+  #tutorDirectory.content-grid {
+    grid-template-columns: 1fr;
   }
 }
-
-
