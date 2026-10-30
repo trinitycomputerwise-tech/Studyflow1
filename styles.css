@@ -91,3 +91,177 @@
   opacity: 1 !important;
 }
 
+/* =================================
+   STUDYFLOW TUTORING DESIGN
+================================= */
+
+#tutoringView {
+  display: grid;
+  gap: 22px;
+}
+
+#tutoringView > .page-intro {
+  background: linear-gradient(120deg, #eaf2ff, #f5f0ff);
+  border: 1px solid #dce7ff;
+  border-radius: 18px;
+  padding: 30px;
+  margin: 6px 0 0;
+}
+
+#tutoringView > .page-intro h1 {
+  color: #245fc5;
+  font-size: 30px;
+}
+
+#tutoringView > .panel {
+  border-radius: 17px;
+  padding: 25px;
+  box-shadow: 0 8px 25px #1b31500a;
+}
+
+#tutoringView .panel-heading {
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--line);
+}
+
+#tutorProfileForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+#tutorProfileForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#tutorProfileForm input,
+#tutorProfileForm textarea {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+
+#tutorProfileForm input:focus,
+#tutorProfileForm textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px #3478f618;
+}
+
+#tutorProfileForm label:nth-child(3),
+#tutorProfileForm label:nth-child(4),
+#tutorProfileForm button,
+#tutorProfileMessage {
+  grid-column: 1 / -1;
+}
+
+#tutorProfileForm textarea {
+  resize: vertical;
+}
+
+#tutorProfileForm button {
+  justify-self: start;
+  min-width: 190px;
+}
+
+#tutorDirectory.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+#tutorDirectory > .panel {
+  padding: 21px;
+  border-radius: 15px;
+  border-top: 3px solid var(--blue);
+  box-shadow: 0 7px 22px #1b31500b;
+}
+
+#tutorDirectory > .panel h3 {
+  font-size: 17px;
+  margin: 0 0 13px;
+}
+
+#tutorDirectory > .panel p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+#tutorDirectory > .panel form {
+  display: grid;
+  gap: 11px;
+  border-top: 1px solid var(--line);
+  margin-top: 17px;
+  padding-top: 17px;
+}
+
+#tutorDirectory > .panel form label {
+  display: grid;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#tutorDirectory > .panel form input,
+#tutorDirectory > .panel form textarea {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#tutoringRequests > .panel {
+  border-radius: 13px;
+  margin-bottom: 13px;
+  padding: 19px;
+}
+
+#tutoringRequests > .panel h3 {
+  margin-top: 0;
+  color: var(--blue);
+}
+
+#tutoringRequests > .panel p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  #tutorProfileForm,
+  #tutorDirectory.content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #tutoringView > .page-intro {
+    padding: 22px;
+  }
+
+  #tutoringView > .page-intro h1 {
+    font-size: 24px;
+  }
+
+  #tutoringView > .panel {
+    padding: 17px;
+  }
+
+  #tutorProfileForm label,
+  #tutorProfileForm button,
+  #tutorProfileMessage {
+    grid-column: 1;
+  }
+}
+
+
