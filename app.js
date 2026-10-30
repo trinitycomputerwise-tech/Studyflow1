@@ -473,7 +473,7 @@ if (tutorProfileForm) {
           subjects,
           bio,
           experience: bio,
-          availability
+          availability,
           session_price_ngn: sessionPrice,
         });
 
