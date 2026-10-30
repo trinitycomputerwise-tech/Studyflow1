@@ -266,3 +266,161 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* STUDYFLOW - MODERN DASHBOARD DESIGN */
+
+#welcomeView .welcome-row {
+  border: 1px solid #d7e7ff;
+  border-radius: 22px;
+  background: linear-gradient(120deg, #eaf3ff, #f7faff 65%, #e5f0ff);
+  padding: 35px;
+  box-shadow: 0 10px 30px rgba(40, 100, 190, .07);
+}
+
+#welcomeView .welcome-row h1 {
+  color: #1d56ad;
+  font-size: 32px;
+  letter-spacing: -1.2px;
+}
+
+#welcomeView .welcome-row .muted {
+  color: #62738d;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+#welcomeView .stats-grid {
+  gap: 18px;
+}
+
+#welcomeView .stat-card {
+  border: 1px solid #e0eaf7;
+  border-radius: 17px;
+  padding: 21px;
+  box-shadow: 0 8px 24px rgba(30, 70, 130, .06);
+  transition: transform .2s, box-shadow .2s;
+}
+
+#welcomeView .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(30, 70, 130, .11);
+}
+
+#welcomeView .stat-number {
+  color: #1d56ad;
+  font-size: 32px;
+}
+
+#welcomeView .panel {
+  border: 1px solid #e0eaf7;
+  border-radius: 17px;
+  padding: 24px;
+  box-shadow: 0 7px 24px rgba(30, 70, 130, .05);
+}
+
+#welcomeView .panel-heading h2 {
+  color: #1d3557;
+  font-size: 17px;
+}
+
+#welcomeView .heading-icon {
+  background: #eaf3ff;
+  color: #3478d4;
+  border-radius: 11px;
+}
+
+#welcomeView .progress-ring {
+  box-shadow: 0 5px 18px rgba(52, 120, 246, .10);
+}
+
+#welcomeView .progress-summary strong {
+  color: #1d56ad;
+}
+
+#welcomeView .progress-track,
+#welcomeView .mini-track {
+  background: #eaf0f8;
+  border-radius: 20px;
+}
+
+#welcomeView .progress-fill {
+  background: linear-gradient(90deg, #3478f6, #75aaff);
+  border-radius: 20px;
+}
+
+#welcomeView .task-row {
+  padding: 15px 0;
+  border-color: #edf1f7;
+}
+
+#welcomeView .date-tile {
+  border-radius: 11px;
+  background: #edf4ff;
+  border-color: #dce9ff;
+}
+
+#welcomeView .task-title {
+  color: #263e60;
+  font-size: 12px;
+}
+
+#welcomeView .subject-mini {
+  border: 1px solid #e3ebf6;
+  border-radius: 13px;
+  padding: 15px;
+  background: #fbfdff;
+  transition: border-color .2s, transform .2s;
+}
+
+#welcomeView .subject-mini:hover {
+  border-color: #b9d2fa;
+  transform: translateY(-2px);
+}
+
+#welcomeView .quick-action {
+  padding: 15px 0;
+  transition: color .2s;
+}
+
+#welcomeView .quick-action:hover {
+  color: #3478d4;
+}
+
+#welcomeView .quick-symbol {
+  border-radius: 11px;
+}
+
+#welcomeView .tip-panel {
+  border: 1px solid #dce7ff;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #edf4ff, #f8faff);
+}
+
+#welcomeView .tip-panel h3 {
+  color: #1d56ad;
+  font-size: 16px;
+}
+
+#welcomeView .activity-item {
+  padding: 13px 0;
+  border-color: #edf1f7;
+}
+
+@media (max-width: 620px) {
+  #welcomeView .welcome-row {
+    padding: 24px 20px;
+    border-radius: 17px;
+  }
+
+  #welcomeView .welcome-row h1 {
+    font-size: 25px;
+  }
+
+  #welcomeView .panel {
+    padding: 18px;
+  }
+
+  #welcomeView .stat-card {
+    padding: 15px;
+  }
+}
