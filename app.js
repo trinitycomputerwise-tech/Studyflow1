@@ -263,7 +263,16 @@ async function loadTutoringData() {
       const availability = document.createElement("p");
       availability.textContent = "Availability: " + (tutor.availability || "Not specified");
 
-      card.append(heading, subjects, bio, experience, availability);
+      const price = document.createElement("p");
+price.textContent = tutor.session_price_ngn
+  ? "Price per session: " + new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      maximumFractionDigits: 0
+    }).format(tutor.session_price_ngn)
+  : "Price per session: Not set";
+
+card.append(heading, subjects, bio, experience, availability, price);
 
       if (tutor.id !== authData.user.id) {
         const form = document.createElement("form");
@@ -351,6 +360,8 @@ async function loadTutoringData() {
     document.getElementById("tutorSubjects").value = (ownProfile.subjects || []).join(", ");
     document.getElementById("tutorBio").value = ownProfile.bio || "";
     document.getElementById("tutorAvailability").value = ownProfile.availability || "";
+    const priceInput = document.getElementById("tutorSessionPrice");
+    if (priceInput) priceInput.value = ownProfile.session_price_ngn ?? "";
   }
 
   const { data: ownRequests, error: requestError } = await supabaseClient
@@ -442,8 +453,10 @@ if (tutorProfileForm) {
       .filter(Boolean);
     const bio = document.getElementById("tutorBio").value.trim();
     const availability = document.getElementById("tutorAvailability").value.trim();
+    const sessionPrice = Number(document.getElementById("tutorSessionPrice").value);
 
-    if (!displayName || subjects.length === 0 || !bio || !availability) {
+    if (!displayName || subjects.length === 0 || !bio || !availability ||
+    !Number.isInteger(sessionPrice) || sessionPrice <= 0) {
       message.textContent = "Please complete all tutor profile fields.";
       return;
     }
@@ -461,6 +474,7 @@ if (tutorProfileForm) {
           bio,
           experience: bio,
           availability
+          session_price_ngn: sessionPrice,
         });
 
       if (error) {
