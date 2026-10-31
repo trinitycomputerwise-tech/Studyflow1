@@ -424,6 +424,57 @@ card.append(heading, subjects, bio, experience, availability, price);
         item.append(button);
       });
     }
+        if (
+      request.student_id === authData.user.id &&
+      request.status === "Approved"
+    ) {
+      const payButton = document.createElement("button");
+      payButton.type = "button";
+      payButton.className = "primary-button";
+      payButton.textContent = "Pay for session";
+
+      payButton.addEventListener("click", async () => {
+        payButton.disabled = true;
+        payButton.textContent = "Opening secure checkout...";
+
+        try {
+          const { data: sessionData, error: sessionError } =
+            await supabaseClient.auth.getSession();
+
+          if (sessionError || !sessionData.session?.access_token) {
+            throw new Error("Please sign in again before making payment.");
+          }
+
+          const checkoutResponse = await fetch(
+            "/.netlify/functions/create-paystack-checkout",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${sessionData.session.access_token}`
+              },
+              body: JSON.stringify({ requestId: request.id })
+            }
+          );
+
+          const checkout = await checkoutResponse.json();
+
+          if (!checkoutResponse.ok || !checkout.authorization_url) {
+            throw new Error(
+              checkout.error || "Could not start payment. Please try again."
+            );
+          }
+
+          window.location.assign(checkout.authorization_url);
+        } catch (error) {
+          alert(error.message || "Could not start payment.");
+          payButton.disabled = false;
+          payButton.textContent = "Pay for session";
+        }
+      });
+
+      item.append(payButton);
+    }
 
     requests.append(item);
   });
