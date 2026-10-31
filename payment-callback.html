@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyFlow — Confirming payment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 24px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    #message { margin-top: 24px; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>StudyFlow payment</h1>
+  <p id="message" role="status">
+    Checking your payment with Paystack. Please wait...
+  </p>
+  <p><a href="/">Return to StudyFlow</a></p>
+
+  <script>
+    (async () => {
+      const message = document.getElementById("message");
+      const SUPABASE_URL =
+        "https://vpkqhxzzqdlqaqvioxbd.supabase.co";
+      const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_Gmho7VHOy9KRURyWFZRrLg_lyV238vM";
+
+      const client = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
+      const params = new URLSearchParams(window.location.search);
+      const reference =
+        params.get("reference") || params.get("trxref");
+
+      if (!reference) {
+        message.textContent =
+          "No payment reference was found. Please return to StudyFlow and check your tutoring request.";
+        return;
+      }
+
+      try {
+        const { data, error } = await client.auth.getSession();
+
+        if (error || !data.session?.access_token) {
+          message.textContent =
+            "Please sign in to StudyFlow again, then check your tutoring request for its payment status.";
+          return;
+        }
+
+        const response = await fetch(
+          "/.netlify/functions/verify-paystack-payment",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.session.access_token}`
+            },
+            body: JSON.stringify({ reference })
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || result.status !== "Paid") {
+          message.textContent =
+            result.error ||
+            "We could not confirm this payment. Please check your tutoring request before trying again.";
+          return;
+        }
+
+        message.textContent =
+          `Payment confirmed! ₦${Number(result.amount_ngn).toLocaleString("en-NG")} has been recorded. You can return to StudyFlow.`;
+      } catch (error) {
+        console.error("Payment confirmation error:", error);
+        message.textContent =
+          "We couldn't verify the payment just now. Please return to StudyFlow and check again.";
+      }
+    })();
+  </script>
+</body>
+</html>
