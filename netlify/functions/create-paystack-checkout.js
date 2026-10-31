@@ -30,10 +30,17 @@ exports.handler = async (event) => {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const paystackKey = process.env.PAYSTACK_SECRET_KEY;
 
-    if (!supabaseUrl || !supabaseKey || !paystackKey) {
-      return respond(500, { error: "Payment service is not configured" });
-    }
+    const missingSettings = [];
+    if (!supabaseUrl) missingSettings.push("SUPABASE_URL");
+    if (!supabaseKey) missingSettings.push("SUPABASE_SERVICE_ROLE_KEY");
+    if (!paystackKey) missingSettings.push("PAYSTACK_SECRET_KEY");
 
+    if (missingSettings.length > 0) {
+      console.error("Missing payment settings:", missingSettings);
+      return respond(500, {
+        error: "Missing Netlify setting: " + missingSettings.join(", ")
+      });
+    }
     const accessToken = (event.headers.authorization || "").replace(/^Bearer\s+/i, "");
     if (!accessToken) {
       return respond(401, { error: "Please sign in first" });
