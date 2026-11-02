@@ -1314,6 +1314,17 @@ const filtered = materials.filter(item => {
 
   return matchesSearch && matchesSubject;
 });
+  filtered.sort((a, b) => {
+  if (sortOrder === "oldest") {
+    return new Date(a.created_at) - new Date(b.created_at);
+  }
+
+  if (sortOrder === "alphabetical") {
+    return a.title.localeCompare(b.title);
+  }
+
+  return new Date(b.created_at) - new Date(a.created_at);
+});
 
   if (!filtered.length) {
     list.innerHTML = "<p class='muted'>No study materials found.</p>";
