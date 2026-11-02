@@ -1,3 +1,4 @@
+
 const supabaseHeaders = (secretKey) => ({
   apikey: secretKey,
   Authorization: `Bearer ${secretKey}`,
@@ -34,7 +35,9 @@ exports.handler = async (event) => {
       return respond(500, { error: "Payment service is not configured" });
     }
 
-    const accessToken = (event.headers.authorization || "").replace(/^Bearer\s+/i, "");
+    const accessToken = (event.headers?.authorization || "")
+      .replace(/^Bearer\s+/i, "");
+
     if (!accessToken) {
       return respond(401, { error: "Please sign in first" });
     }
@@ -47,7 +50,9 @@ exports.handler = async (event) => {
     });
 
     if (!authResponse.ok) {
-      return respond(401, { error: "Your login session is invalid. Please sign in again." });
+      return respond(401, {
+        error: "Your login session is invalid. Please sign in again."
+      });
     }
 
     const student = await authResponse.json();
@@ -66,7 +71,9 @@ exports.handler = async (event) => {
       "id,request_id,student_id,tutor_id,amount_ngn,reference,status"
     );
 
-    const paymentResponse = await fetch(paymentUrl, { headers: dbHeaders });
+    const paymentResponse = await fetch(paymentUrl, {
+      headers: dbHeaders
+    });
 
     if (!paymentResponse.ok) {
       throw new Error("Could not retrieve the payment record");
@@ -80,11 +87,17 @@ exports.handler = async (event) => {
     }
 
     if (payment.status === "Paid") {
-      return respond(200, { status: "Paid", message: "This payment is already confirmed." });
+      return respond(200, {
+        status: "Paid",
+        message: "This payment is already confirmed."
+      });
     }
 
     if (payment.status !== "Pending") {
-      return respond(400, { error: "This payment is not pending" });
+      return respond(400, {
+        error: "This payment is no longer pending",
+        status: payment.status
+      });
     }
 
     const verifyResponse = await fetch(
@@ -102,23 +115,43 @@ exports.handler = async (event) => {
     if (
       !verifyResponse.ok ||
       !verifyResult.status ||
-      !verifyResult.data ||
-      verifyResult.data.status !== "success"
+      !verifyResult.data
     ) {
-      return respond(400, { error: "Paystack has not confirmed this payment as successful" });
+      return respond(502, {
+        status: "Pending",
+        error: "Paystack could not confirm the payment yet. Please check again shortly."
+      });
     }
 
     const transaction = verifyResult.data;
 
     if (
       transaction.reference !== payment.reference ||
-      transaction.amount !== payment.amount_ngn * 100 ||
+      Number(transaction.amount) !== Math.round(Number(payment.amount_ngn) * 100) ||
       transaction.currency !== "NGN" ||
-      transaction.metadata?.request_id !== payment.request_id ||
-      transaction.metadata?.student_id !== payment.student_id ||
-      transaction.metadata?.tutor_id !== payment.tutor_id
+      String(transaction.metadata?.request_id) !== String(payment.request_id) ||
+      String(transaction.metadata?.student_id) !== String(payment.student_id) ||
+      String(transaction.metadata?.tutor_id) !== String(payment.tutor_id)
     ) {
-      return respond(400, { error: "Payment details do not match the tutoring request" });
+      return respond(400, {
+        error: "Payment details do not match the tutoring request"
+      });
+    }
+
+    let newStatus;
+
+    if (transaction.status === "success") {
+      newStatus = "Paid";
+    } else if (
+      transaction.status === "failed" ||
+      transaction.status === "abandoned"
+    ) {
+      newStatus = "Failed";
+    } else {
+      return respond(200, {
+        status: "Pending",
+        message: "Your payment is still being processed. Please check again shortly."
+      });
     }
 
     const updateUrl = new URL(`${supabaseUrl}/rest/v1/tutoring_payments`);
@@ -131,10 +164,16 @@ exports.handler = async (event) => {
         ...dbHeaders,
         Prefer: "return=representation"
       },
-      body: JSON.stringify({
-        status: "Paid",
-        paid_at: new Date().toISOString()
-      })
+      body: JSON.stringify(
+        newStatus === "Paid"
+          ? {
+              status: "Paid",
+              paid_at: new Date().toISOString()
+            }
+          : {
+              status: "Failed"
+            }
+      )
     });
 
     if (!updateResponse.ok) {
@@ -144,18 +183,24 @@ exports.handler = async (event) => {
     const updatedPayments = await updateResponse.json();
 
     if (!updatedPayments.length) {
-      return respond(409, { error: "Payment status changed. Please refresh and check again." });
+      return respond(409, {
+        error: "Payment status changed. Please refresh and check again."
+      });
     }
 
     return respond(200, {
-      status: "Paid",
+      status: newStatus,
       reference: payment.reference,
       amount_ngn: payment.amount_ngn,
-      message: "Payment successfully verified."
+      message: newStatus === "Paid"
+        ? "Payment successfully verified."
+        : "Payment was unsuccessful. You can try again."
     });
 
   } catch (error) {
     console.error("Payment verification error:", error);
-    return respond(500, { error: "Unable to verify payment. Please try again." });
+    return respond(500, {
+      error: "Unable to verify payment. Please try again."
+    });
   }
 };
