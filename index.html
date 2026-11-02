@@ -143,26 +143,112 @@
         </div>
       </header>
       
-      <section class="social-share" style="text-align:center; padding:20px; margin:15px auto;">
+     
+      <style>
+      .sf-share {
+        max-width: 650px;
+        margin: 30px auto;
+        padding: 28px 20px;
+        text-align: center;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        font-family: Arial, sans-serif;
+      }
+
+      .sf-share h3 {
+        margin: 0 0 10px;
+        color: #172554;
+        font-size: 23px;
+      }
+
+      .sf-share p {
+        color: #64748b;
+        margin-bottom: 22px;
+      }
+
+      .sf-share-buttons {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .sf-share-buttons a,
+      .sf-share-buttons button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 12px 19px;
+        border: none;
+        border-radius: 30px;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform .2s, opacity .2s;
+      }
+
+      .sf-share-buttons a:hover,
+      .sf-share-buttons button:hover {
+        transform: translateY(-3px);
+        opacity: .88;
+      }
+
+      .sf-whatsapp { background: #25D366; }
+      .sf-facebook { background: #1877F2; }
+      .sf-x { background: #171717; }
+      .sf-copy { background: #475569; }
+
+      .sf-icon {
+        font-size: 19px;
+        font-weight: bold;
+      }
+
+      @media (max-width: 480px) {
+        .sf-share-buttons a,
+        .sf-share-buttons button {
+          flex: 1 1 130px;
+        }
+      }
+      </style>
+
+      <!-- StudyFlow Professional Social Sharing -->
+      <section class="sf-share">
         <h3>Share StudyFlow with Friends</h3>
-        <p>Help other students stay organized!</p>
+        <p>Help other students stay organized and achieve more!</p>
 
-        <button type="button" onclick="window.open('https://wa.me/?text='+encodeURIComponent('Stay organized with StudyFlow! https://studyflow27.netlify.app/'),'_blank')">
-          WhatsApp
-        </button>
+        <div class="sf-share-buttons">
 
-        <button type="button" onclick="window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent('https://studyflow27.netlify.app/'),'_blank')">
-          Facebook
-        </button>
+          <a class="sf-whatsapp"
+             href="https://wa.me/?text=Stay%20organized%20with%20StudyFlow!%20https%3A%2F%2Fstudyflow27.netlify.app%2F"
+             target="_blank" rel="noopener">
+            <span class="sf-icon">☏</span> WhatsApp
+          </a>
 
-        <button type="button" onclick="window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Stay organized with StudyFlow!')+'&url='+encodeURIComponent('https://studyflow27.netlify.app/'),'_blank')">
-          Share on X
-        </button>
+          <a class="sf-facebook"
+             href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fstudyflow27.netlify.app%2F"
+             target="_blank" rel="noopener">
+            <span class="sf-icon">f</span> Facebook
+           </a>
 
-        <button type="button" onclick="navigator.clipboard.writeText('https://studyflow27.netlify.app/').then(()=>alert('StudyFlow link copied!'))">
-          Copy Link
-        </button>
+          <a class="sf-x"
+             href="https://twitter.com/intent/tweet?text=Stay%20organized%20with%20StudyFlow!&url=https%3A%2F%2Fstudyflow27.netlify.app%2F"
+             target="_blank" rel="noopener">
+            <span class="sf-icon">𝕏</span> Share on X
+          </a>
+
+          <button class="sf-copy" type="button"
+            onclick="navigator.clipboard.writeText('https://studyflow27.netlify.app/').then(() => alert('StudyFlow link copied!')).catch(() => alert('Please copy the website address manually.'))">
+            <span class="sf-icon">▢</span> Copy Link
+          </button>
+
+        </div>
       </section>
+      <!-- End StudyFlow Professional Social Sharing -->
 
 
       <section class="view active-view" id="dashboardView">
