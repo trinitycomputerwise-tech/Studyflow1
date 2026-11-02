@@ -383,22 +383,24 @@ card.append(heading, subjects, bio, experience, availability, price);
 
   const requestIds = ownRequests.map(request => request.id);
 
-  const { data: paymentRecords, error: paymentError } =
-    await supabaseClient
-      .from("tutoring_payments")
-      .select("request_id, status, amount_ngn")
-      .in("request_id", requestIds);
+ const { data: paymentRecords, error: paymentError } =
+  await supabaseClient
+    .from("tutoring_payments")
+    .select("request_id, status, amount_ngn, created_at")
+    .in("request_id", requestIds)
+    .order("created_at", { ascending: false });
 
-  if (paymentError) {
-    console.error("Could not load payment records:", paymentError);
+if (paymentError) {
+  console.error("Could not load payment records:", paymentError);
+}
+
+const paymentsByRequest = {};
+
+(paymentRecords || []).forEach(payment => {
+  if (!paymentsByRequest[payment.request_id]) {
+    paymentsByRequest[payment.request_id] = payment;
   }
-
-  const paymentsByRequest = Object.fromEntries(
-    (paymentRecords || []).map(payment => [
-      payment.request_id,
-      payment
-    ])
-  );
+});
 
   ownRequests.forEach(request => {
     const item = document.createElement("article");
@@ -467,7 +469,7 @@ card.append(heading, subjects, bio, experience, availability, price);
         } else if (payment?.status === "Failed") {
           const failedMessage = document.createElement("p");
           failedMessage.textContent =
-            "Payment failed. Please contact support before trying again.";
+           "Your previous payment failed. You can try again.";
           item.append(failedMessage);
 
         } else {
