@@ -1284,12 +1284,36 @@ function renderStudyMaterials(materials) {
   if (!list) return;
 
   const search = document.getElementById("materialSearch");
-  const term = search?.value?.toLowerCase() || "";
+const subjectFilter = document.getElementById("materialSubjectFilter");
+const term = search?.value?.toLowerCase() || "";
+const selectedSubject = subjectFilter?.value || "";
 
-  const filtered = materials.filter(item =>
-    item.title.toLowerCase().includes(term) ||
-    item.subject.toLowerCase().includes(term)
-  );
+// Build the subject list automatically
+if (subjectFilter) {
+  const currentSubject = subjectFilter.value;
+  const subjects = [...new Set(
+    materials.map(item => item.subject).filter(Boolean)
+  )].sort();
+
+  subjectFilter.innerHTML =
+    '<option value="">All Subjects</option>' +
+    subjects.map(subject =>
+      `<option value="${escapeHtml(subject)}">${escapeHtml(subject)}</option>`
+    ).join("");
+
+  subjectFilter.value = currentSubject;
+}
+
+const filtered = materials.filter(item => {
+  const matchesSearch =
+    (item.title || "").toLowerCase().includes(term) ||
+    (item.subject || "").toLowerCase().includes(term);
+
+  const matchesSubject =
+    !selectedSubject || item.subject === selectedSubject;
+
+  return matchesSearch && matchesSubject;
+});
 
   if (!filtered.length) {
     list.innerHTML = "<p class='muted'>No study materials found.</p>";
@@ -1460,6 +1484,11 @@ document.getElementById("materialUploadForm")?.addEventListener(
 
 document.getElementById("materialSearch")?.addEventListener(
   "input",
+  loadStudyMaterials
+);
+
+document.getElementById("materialSubjectFilter")?.addEventListener(
+  "change",
   loadStudyMaterials
 );
 
