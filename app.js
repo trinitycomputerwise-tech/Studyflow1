@@ -1303,7 +1303,7 @@ if (subjectFilter) {
 
   subjectFilter.value = currentSubject;
 }
-
+const sortOrder = document.getElementById("materialSort")?.value || "newest";
 const filtered = materials.filter(item => {
   const matchesSearch =
     (item.title || "").toLowerCase().includes(term) ||
