@@ -1331,8 +1331,29 @@ const filtered = materials.filter(item => {
     list.innerHTML = "<p class='muted'>No study materials found.</p>";
     return;
   }
+  
+  const totalPages = Math.max(1, Math.ceil(filtered.length / materialsPerPage));
 
- list.innerHTML = filtered.map(item => {
+  if (currentMaterialsPage > totalPages) {
+    currentMaterialsPage = totalPages;
+  }
+
+const startIndex = (currentMaterialsPage - 1) * materialsPerPage;
+const paginatedMaterials = filtered.slice(
+  startIndex,
+  startIndex + materialsPerPage
+);
+
+document.getElementById("materialsPageInfo").textContent =
+  `Page ${currentMaterialsPage} of ${totalPages}`;
+
+document.getElementById("materialsPrevious").disabled =
+  currentMaterialsPage === 1;
+
+document.getElementById("materialsNext").disabled =
+  currentMaterialsPage === totalPages;
+
+list.innerHTML = paginatedMaterials.map(item => {
   const fileName = item.file_name || "";
   const extension = fileName.split(".").pop().toLowerCase();
 
@@ -1575,6 +1596,24 @@ document.getElementById("materialSubjectFilter")?.addEventListener(
 document.getElementById("materialSort")?.addEventListener(
   "change",
   loadStudyMaterials
+);
+
+document.getElementById("materialsPrevious")?.addEventListener(
+  "click",
+  () => {
+    if (currentMaterialsPage > 1) {
+      currentMaterialsPage--;
+      loadStudyMaterials();
+    }
+  }
+);
+
+document.getElementById("materialsNext")?.addEventListener(
+  "click",
+  () => {
+    currentMaterialsPage++;
+    loadStudyMaterials();
+  }
 );
 
 function escapeHtml(value) {
