@@ -602,7 +602,7 @@ function toast(message) {
   toastTimer = setTimeout(() => node.classList.remove("show"), 2600);
 }
 function setView(view) {
-  const known = ["dashboard","assignments","subjects","calendar","tutoring"];
+  const known = ["dashboard","assignments","subjects","calendar","tutoring","materials"];
   if (!known.includes(view)) view = "dashboard";
   $$(".view").forEach(node => node.classList.toggle("active-view", node.id === `${view}View`));
   $$(".nav-item[data-view]").forEach(node => node.classList.toggle("active", node.dataset.view === view));
@@ -612,6 +612,7 @@ function setView(view) {
   if (view === "subjects") renderSubjectsPage();
   if (view === "calendar") renderCalendar();
   if (view === "tutoring") loadTutoringData();
+  if (view === "materials") loadStudyMaterials();
   window.scrollTo({top:0, behavior:"smooth"});
 }
 function openDialog(task = null) {
@@ -1232,3 +1233,242 @@ if (session?.user) {
 }
 
 });
+
+// ===============================
+// STUDY MATERIALS
+// ===============================
+
+async function loadStudyMaterials() {
+  const list = document.getElementById("materialsList");
+  const uploadPanel = document.getElementById("materialUploadPanel");
+
+  if (!list) return;
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    list.innerHTML = "<p>Please log in to view study materials.</p>";
+    return;
+  }
+
+  const { data: roles } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  const canUpload = roles?.some(item =>
+    ["admin", "tutor"].includes(item.role)
+  );
+
+  if (uploadPanel) {
+    uploadPanel.style.display = canUpload ? "block" : "none";
+  }
+
+  const { data: materials, error } = await supabaseClient
+    .from("study_materials")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.innerHTML = "<p>Unable to load study materials. Please try again.</p>";
+    console.error(error);
+    return;
+  }
+
+  renderStudyMaterials(materials || []);
+}
+
+function renderStudyMaterials(materials) {
+  const list = document.getElementById("materialsList");
+  if (!list) return;
+
+  const search = document.getElementById("materialSearch");
+  const term = search?.value?.toLowerCase() || "";
+
+  const filtered = materials.filter(item =>
+    item.title.toLowerCase().includes(term) ||
+    item.subject.toLowerCase().includes(term)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = "<p class='muted'>No study materials found.</p>";
+    return;
+  }
+
+  list.innerHTML = filtered.map(item => `
+    <div class="panel" style="margin-top:15px;">
+      <h3>${escapeHtml(item.title)}</h3>
+      <p><strong>Subject:</strong> ${escapeHtml(item.subject)}</p>
+      <p><strong>Category:</strong> ${escapeHtml(item.category || "Notes")}</p>
+      <p>${escapeHtml(item.description || "")}</p>
+      ${item.video_url ? `<p><a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener noreferrer">Watch Video</a></p>` : ""}
+      ${item.file_path ? `<button class="secondary-btn" onclick="downloadStudyMaterial('${item.id}')">Download Material</button>` : ""}
+      <div id="materialActions-${item.id}"></div>
+    </div>
+  `).join("");
+
+  addStudyMaterialActions(filtered);
+}
+
+async function addStudyMaterialActions(materials) {
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+  if (!user) return;
+
+  const { data: roles } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  const isAdmin = roles?.some(item => item.role === "admin");
+  const isTutor = roles?.some(item => item.role === "tutor");
+
+  materials.forEach(item => {
+   if (isAdmin || (isTutor && item.uploader_id === user.id)) {
+      const actions = document.getElementById(`materialActions-${item.id}`);
+      if (actions) {
+        actions.innerHTML = `
+          <button class="secondary-btn" onclick="deleteStudyMaterial('${item.id}', '${escapeHtml(item.file_path || "")}')">Delete</button>
+        `;
+      }
+    }
+  });
+}
+
+async function uploadStudyMaterial(event) {
+  event.preventDefault();
+
+  const message = document.getElementById("materialUploadMessage");
+  const title = document.getElementById("materialTitle").value.trim();
+  const subject = document.getElementById("materialSubject").value.trim();
+  const category = document.getElementById("materialCategory").value;
+  const description = document.getElementById("materialDescription").value.trim();
+  const file = document.getElementById("materialFile").files[0];
+  const videoUrl = document.getElementById("materialVideoUrl").value.trim();
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    message.textContent = "Please log in first.";
+    return;
+  }
+
+  if (!file && !videoUrl) {
+    message.textContent = "Please select a file or enter a video link.";
+    return;
+  }
+
+  message.textContent = "Uploading...";
+
+  let filePath = null;
+
+  if (file) {
+    filePath = `${user.id}/${Date.now()}-${file.name}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from("study-materials")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      message.textContent = "File upload failed: " + uploadError.message;
+      return;
+    }
+  }
+
+  const { error } = await supabaseClient
+    .from("study_materials")
+    .insert({
+      title,
+      subject,
+      category,
+      description,
+      file_path: filePath,
+      file_name: file?.name || null,
+      video_url: videoUrl || null,
+      uploader_id: user.id
+    });
+
+  if (error) {
+    if (filePath) {
+      await supabaseClient.storage.from("study-materials").remove([filePath]);
+    }
+    message.textContent = "Could not save material: " + error.message;
+    return;
+  }
+
+  document.getElementById("materialUploadForm").reset();
+  message.textContent = "Study material uploaded successfully!";
+  loadStudyMaterials();
+}
+
+async function downloadStudyMaterial(id) {
+  const { data: material, error } = await supabaseClient
+    .from("study_materials")
+    .select("file_path, file_name")
+    .eq("id", id)
+    .single();
+
+  if (error || !material?.file_path) {
+    alert("Material file not found.");
+    return;
+  }
+
+  const { data, error: downloadError } = await supabaseClient.storage
+    .from("study-materials")
+    .createSignedUrl(material.file_path, 60);
+
+  if (downloadError) {
+    alert("Download failed: " + downloadError.message);
+    return;
+  }
+
+  window.open(data.signedUrl, "_blank");
+}
+
+async function deleteStudyMaterial(id, filePath) {
+  if (!confirm("Are you sure you want to delete this material?")) return;
+
+  const { error } = await supabaseClient
+    .from("study_materials")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Could not delete material: " + error.message);
+    return;
+  }
+
+  if (filePath) {
+    const { error: storageError } = await supabaseClient.storage
+      .from("study-materials")
+      .remove([filePath]);
+
+    if (storageError) console.error(storageError);
+  }
+
+  alert("Material deleted.");
+  loadStudyMaterials();
+}
+
+// Connect form and search controls
+document.getElementById("materialUploadForm")?.addEventListener(
+  "submit",
+  uploadStudyMaterial
+);
+
+document.getElementById("materialSearch")?.addEventListener(
+  "input",
+  loadStudyMaterials
+);
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
