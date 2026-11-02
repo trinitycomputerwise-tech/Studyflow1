@@ -1320,17 +1320,35 @@ const filtered = materials.filter(item => {
     return;
   }
 
-  list.innerHTML = filtered.map(item => `
+ list.innerHTML = filtered.map(item => {
+  const fileName = item.file_name || "";
+  const extension = fileName.split(".").pop().toLowerCase();
+
+  let fileIcon = "📄";
+
+  if (extension === "pdf") fileIcon = "📕";
+  else if (["doc", "docx"].includes(extension)) fileIcon = "📝";
+  else if (["ppt", "pptx"].includes(extension)) fileIcon = "📊";
+  else if (["xls", "xlsx"].includes(extension)) fileIcon = "📈";
+  else if (item.video_url) fileIcon = "🎥";
+
+  const uploadDate = item.created_at
+    ? new Date(item.created_at).toLocaleDateString()
+    : "Date unavailable";
+
+  return `
     <div class="panel" style="margin-top:15px;">
-      <h3>${escapeHtml(item.title)}</h3>
+      <h3>${fileIcon} ${escapeHtml(item.title)}</h3>
       <p><strong>Subject:</strong> ${escapeHtml(item.subject)}</p>
       <p><strong>Category:</strong> ${escapeHtml(item.category || "Notes")}</p>
+      <p><strong>Uploaded:</strong> ${uploadDate}</p>
       <p>${escapeHtml(item.description || "")}</p>
-      ${item.video_url ? `<p><a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener noreferrer">Watch Video</a></p>` : ""}
       ${item.file_path ? `<button class="secondary-btn" onclick="downloadStudyMaterial('${item.id}')">Download Material</button>` : ""}
+      ${item.video_url ? `<p><a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener noreferrer">🎥 Watch Video</a></p>` : ""}
       <div id="materialActions-${item.id}"></div>
     </div>
-  `).join("");
+  `;
+}).join("");
 
   addStudyMaterialActions(filtered);
 }
@@ -1353,8 +1371,9 @@ async function addStudyMaterialActions(materials) {
       const actions = document.getElementById(`materialActions-${item.id}`);
       if (actions) {
         actions.innerHTML = `
-          <button class="secondary-btn" onclick="deleteStudyMaterial('${item.id}', '${escapeHtml(item.file_path || "")}')">Delete</button>
-        `;
+  <button class="secondary-btn" onclick="editStudyMaterial('${item.id}')">Edit</button>
+  <button class="secondary-btn" onclick="deleteStudyMaterial('${item.id}', '${escapeHtml(item.file_path || "")}')">Delete</button>
+`;
       }
     }
   });
@@ -1473,6 +1492,56 @@ async function deleteStudyMaterial(id, filePath) {
   }
 
   alert("Material deleted.");
+  loadStudyMaterials();
+}
+async function editStudyMaterial(id) {
+  const { data: material, error: fetchError } = await supabaseClient
+    .from("study_materials")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !material) {
+    alert("Could not load material details.");
+    return;
+  }
+
+  const title = prompt("Edit material title:", material.title);
+  if (title === null) return;
+
+  const subject = prompt("Edit subject:", material.subject);
+  if (subject === null) return;
+
+  const category = prompt("Edit category:", material.category || "Notes");
+  if (category === null) return;
+
+  const description = prompt(
+    "Edit description:",
+    material.description || ""
+  );
+  if (description === null) return;
+
+  if (!title.trim() || !subject.trim()) {
+    alert("Title and subject are required.");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("study_materials")
+    .update({
+      title: title.trim(),
+      subject: subject.trim(),
+      category: category.trim(),
+      description: description.trim()
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert("Could not update material: " + error.message);
+    return;
+  }
+
+  alert("Material updated successfully!");
   loadStudyMaterials();
 }
 
