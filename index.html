@@ -89,6 +89,7 @@
         <button class="nav-item" data-view="subjects"><span>▧</span> Subjects</button>
         <button class="nav-item" data-view="calendar"><span>▦</span> Calendar</button>
         <button class="nav-item" data-view="tutoring"><span>♧</span> Tutoring Services</button>
+        <button class="nav-item" data-view="materials"><span>📚</span> Study Materials</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="focus-card">
@@ -279,8 +280,71 @@
           </div>
         </section>
       </section>
+      
+      <section class="view" id="materialsView">
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">LEARN AND GROW</p>
+            <h1>Study Materials</h1>
+            <p class="muted">Access notes, textbooks, past questions and learning videos.</p>
+          </div>
+        </div>
 
+        <section class="panel" id="materialUploadPanel" style="display:none;">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">SHARE KNOWLEDGE</p>
+              <h2>Upload Study Material</h2>
+            </div>
+          </div>
 
+          <form id="materialUploadForm">
+            <label for="materialTitle">Material title</label>
+            <input id="materialTitle" type="text" required placeholder="e.g. Introduction to Biology">
+
+            <label for="materialSubject">Subject</label>
+            <input id="materialSubject" type="text" required placeholder="e.g. Biology">
+
+            <label for="materialCategory">Category</label>
+            <select id="materialCategory" required>
+              <option value="Notes">Notes</option>
+              <option value="Textbook">Textbook</option>
+              <option value="Lecture Slides">Lecture Slides</option>
+              <option value="Past Questions">Past Questions</option>
+              <option value="Worksheet">Worksheet</option>
+              <option value="Video">Video</option>
+            </select>
+
+            <label for="materialDescription">Description</label>
+            <textarea id="materialDescription" placeholder="Brief description"></textarea>
+
+            <label for="materialFile">Choose a file (PDF or other study document)</label>
+            <input id="materialFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+
+            <label for="materialVideoUrl">Video link (optional)</label>
+            <input id="materialVideoUrl" type="url" placeholder="https://...">
+
+            <button class="primary-btn" type="submit">Upload Material</button>
+            <p id="materialUploadMessage" class="muted"></p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">RESOURCE LIBRARY</p>
+              <h2>Available Materials</h2>
+            </div>
+            </div>
+
+          <input id="materialSearch" type="search" placeholder="Search by title or subject...">
+          <div id="materialsList">
+            <p class="muted">Loading study materials...</p>
+          </div>
+        </section>
+      </section>
+      
+             
 
       <footer class="footer"><span>© <span id="year"></span> StudyFlow</span><span>Made for focused learning <b>•</b> Plan. Study. Achieve.</span></footer>
     </main>
