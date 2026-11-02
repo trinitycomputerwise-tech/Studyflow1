@@ -1586,12 +1586,17 @@ document.getElementById("materialUploadForm")?.addEventListener(
 
 document.getElementById("materialSearch")?.addEventListener(
   "input",
-  loadStudyMaterials
+  () => {
+    currentMaterialsPage = 1;
+    loadStudyMaterials();
+  }
 );
-
 document.getElementById("materialSubjectFilter")?.addEventListener(
   "change",
-  loadStudyMaterials
+  () => {
+    currentMaterialsPage = 1;
+    loadStudyMaterials();
+  }
 );
 document.getElementById("materialSort")?.addEventListener(
   "change",
