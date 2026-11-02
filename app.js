@@ -1571,6 +1571,10 @@ document.getElementById("materialSubjectFilter")?.addEventListener(
   "change",
   loadStudyMaterials
 );
+document.getElementById("materialSort")?.addEventListener(
+  "change",
+  loadStudyMaterials
+);
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
