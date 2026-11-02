@@ -1237,7 +1237,8 @@ if (session?.user) {
 // ===============================
 // STUDY MATERIALS
 // ===============================
-
+let currentMaterialsPage = 1;
+const materialsPerPage = 10;
 async function loadStudyMaterials() {
   const list = document.getElementById("materialsList");
   const uploadPanel = document.getElementById("materialUploadPanel");
