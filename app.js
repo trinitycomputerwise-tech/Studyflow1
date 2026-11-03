@@ -519,6 +519,8 @@ const paymentsByRequest = {};
         });
 
         item.append(payButton);
+      }
+    }
     requests.append(item);
   });
 }
