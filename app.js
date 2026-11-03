@@ -446,84 +446,79 @@ const paymentsByRequest = {};
       });
     }
 
-    if (request.status === "Approved") {
-      const payment = paymentsByRequest[request.id];
+   if (request.status === "Approved") {
+  const payment = paymentsByRequest[request.id];
 
-      if (payment?.status === "Paid") {
-        const paidMessage = document.createElement("p");
-        paidMessage.textContent =
-          "Payment completed — ₦" +
-          Number(payment.amount_ngn).toLocaleString("en-NG") +
-          " Paid";
-        paidMessage.style.color = "green";
-        paidMessage.style.fontWeight = "bold";
-        item.append(paidMessage);
+  if (payment?.status === "Paid") {
+    const paidMessage = document.createElement("p");
+    paidMessage.textContent =
+      "Payment completed — ₦" +
+      Number(payment.amount_ngn).toLocaleString("en-NG") +
+      " Paid";
+    paidMessage.style.color = "green";
+    paidMessage.style.fontWeight = "bold";
+    item.append(paidMessage);
 
-      } else if (request.student_id === authData.user.id) {
-        if (payment?.status === "Pending") {
-          const pendingMessage = document.createElement("p");
-          pendingMessage.textContent =
-            "Payment is pending. Please check your payment status before trying again.";
-                 const payButton = document.createElement("button");
-        payButton.type = "button";
-        payButton.className = "primary-button";
+  } else if (request.student_id === authData.user.id) {
+    const payButton = document.createElement("button");
+    payButton.type = "button";
+    payButton.className = "primary-button";
 
-        if (payment?.status === "Pending") {
-          payButton.textContent = "Check payment / Retry";
-        } else if (payment?.status === "Failed") {
-          payButton.textContent = "Retry payment";
-        } else {
-          payButton.textContent = "Pay for session";
+    if (payment?.status === "Pending") {
+      payButton.textContent = "Check payment / Retry";
+    } else if (payment?.status === "Failed") {
+      payButton.textContent = "Retry payment";
+    } else {
+      payButton.textContent = "Pay for session";
+    }
+
+    const originalButtonText = payButton.textContent;
+
+    payButton.addEventListener("click", async () => {
+      payButton.disabled = true;
+      payButton.textContent = "Checking payment...";
+
+      try {
+        const { data: sessionData, error: sessionError } =
+          await supabaseClient.auth.getSession();
+
+        if (sessionError || !sessionData.session?.access_token) {
+          throw new Error("Please sign in again before making payment.");
         }
 
-        const originalButtonText = payButton.textContent;
-
-        payButton.addEventListener("click", async () => {
-          payButton.disabled = true;
-          payButton.textContent = "Checking payment...";
-
-          try {
-            const { data: sessionData, error: sessionError } =
-              await supabaseClient.auth.getSession();
-
-            if (sessionError || !sessionData.session?.access_token) {
-              throw new Error("Please sign in again before making payment.");
-            }
-
-            const checkoutResponse = await fetch(
-              "/.netlify/functions/create-paystack-checkout",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${sessionData.session.access_token}`
-                },
-                body: JSON.stringify({ requestId: request.id })
-              }
-            );
-
-            const checkout = await checkoutResponse.json();
-
-            if (!checkoutResponse.ok || !checkout.authorization_url) {
-              throw new Error(
-                checkout.error || "Could not start payment. Please try again."
-              );
-            }
-
-            window.location.assign(checkout.authorization_url);
-          } catch (error) {
-            alert(error.message || "Could not start payment.");
-            payButton.disabled = false;
-            payButton.textContent = originalButtonText;
+        const checkoutResponse = await fetch(
+          "/.netlify/functions/create-paystack-checkout",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionData.session.access_token}`
+            },
+            body: JSON.stringify({ requestId: request.id })
           }
-        });
+        );
 
-        item.append(payButton);
+        const checkout = await checkoutResponse.json();
+
+        if (!checkoutResponse.ok || !checkout.authorization_url) {
+          throw new Error(
+            checkout.error || "Could not start payment. Please try again."
+          );
+        }
+
+        window.location.assign(checkout.authorization_url);
+      } catch (error) {
+        alert(error.message || "Could not start payment.");
+        payButton.disabled = false;
+        payButton.textContent = originalButtonText;
       }
-    }
-    requests.append(item);
-  });
+    });
+
+    item.append(payButton);
+  }
 }
+
+requests.append(item);
 const tutorProfileForm = document.getElementById("tutorProfileForm");
 
 if (tutorProfileForm) {
