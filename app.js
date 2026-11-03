@@ -519,6 +519,9 @@ const paymentsByRequest = {};
 }
 
 requests.append(item);
+  });
+}
+
 const tutorProfileForm = document.getElementById("tutorProfileForm");
 
 if (tutorProfileForm) {
