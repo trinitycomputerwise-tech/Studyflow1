@@ -1332,6 +1332,57 @@ async function loadStudyMaterials() {
   renderStudyMaterials(materials || []);
 }
 
+async function loadTutorPayouts() {
+  const list = document.getElementById("payoutsList");
+  if (!list) return;
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    list.innerHTML = "<p>Please sign in first.</p>";
+    return;
+  }
+
+  const { data: roles, error: roleError } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  const isAdmin = !roleError && roles?.some(item => item.role === "admin");
+
+  if (!isAdmin) {
+    list.innerHTML = "<p>Administrator access required.</p>";
+    return;
+  }
+
+  const { data: payouts, error } = await supabaseClient
+    .from("tutor_payouts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Unable to load tutor payouts. Please try again.";
+    console.error(error);
+    return;
+  }
+
+  if (!payouts || payouts.length === 0) {
+    list.innerHTML = "<p>No tutor payouts available yet.</p>";
+    return;
+  }
+
+  list.innerHTML = payouts.map(payout => `
+    <div class="panel" style="margin-top:12px;">
+      <p><strong>Tutor ID:</strong> ${escapeHtml(payout.tutor_id)}</p>
+      <p><strong>Student payment:</strong> ₦${Number(payout.student_payment_ngn).toLocaleString("en-NG")}</p>
+      <p><strong>StudyFlow commission:</strong> ₦${Number(payout.platform_commission_ngn).toLocaleString("en-NG")}</p>
+      <p><strong>Tutor earnings:</strong> ₦${Number(payout.tutor_earning_ngn).toLocaleString("en-NG")}</p>
+      <p><strong>Status:</strong> ${escapeHtml(payout.payout_status)}</p>
+    </div>
+  `).join("");
+}
+
 function renderStudyMaterials(materials) {
   const list = document.getElementById("materialsList");
   if (!list) return;
