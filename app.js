@@ -1238,7 +1238,7 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
 
 // Update the interface when authentication changes
 
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
   updateAuthUI(session?.user ?? null);
   if (session?.user) {
   const { data: roles } = await supabaseClient
