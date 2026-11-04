@@ -1240,26 +1240,27 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
   updateAuthUI(session?.user ?? null);
-  if (session?.user) {
-  const { data: roles } = await supabaseClient
+
+setTimeout(async () => {
+  const payoutsButton = document.getElementById("payoutsNavButton");
+
+  if (!session?.user) {
+    if (payoutsButton) payoutsButton.hidden = true;
+    return;
+  }
+
+  const { data: roles, error } = await supabaseClient
     .from("user_roles")
     .select("role")
     .eq("user_id", session.user.id);
 
-  const isAdmin = roles?.some(item => item.role === "admin");
-  const payoutsButton = document.getElementById("payoutsNavButton");
+  const isAdmin = !error && roles?.some(item => item.role === "admin");
 
   if (payoutsButton) {
     payoutsButton.hidden = !isAdmin;
   }
-} else {
-  const payoutsButton = document.getElementById("payoutsNavButton");
-
-  if (payoutsButton) {
-    payoutsButton.hidden = true;
-  }
-}
-
+}, 0);
+  
   if (event === "PASSWORD_RECOVERY") {
     document.getElementById("auth-section").hidden = true;
     document.getElementById("reset-password-section").hidden = false;
