@@ -1238,8 +1238,27 @@ dashboardLogoutButton?.addEventListener("click", handleLogout);
 
 // Update the interface when authentication changes
 
-supabaseClient.auth.onAuthStateChange((event, session) => {
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
   updateAuthUI(session?.user ?? null);
+  if (session?.user) {
+  const { data: roles } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", session.user.id);
+
+  const isAdmin = roles?.some(item => item.role === "admin");
+  const payoutsButton = document.getElementById("payoutsNavButton");
+
+  if (payoutsButton) {
+    payoutsButton.hidden = !isAdmin;
+  }
+} else {
+  const payoutsButton = document.getElementById("payoutsNavButton");
+
+  if (payoutsButton) {
+    payoutsButton.hidden = true;
+  }
+}
 
   if (event === "PASSWORD_RECOVERY") {
     document.getElementById("auth-section").hidden = true;
