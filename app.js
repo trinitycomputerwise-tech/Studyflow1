@@ -643,6 +643,7 @@ async function setView(view) {
   if (view === "calendar") renderCalendar();
   if (view === "tutoring") loadTutoringData();
   if (view === "materials") loadStudyMaterials();
+  if (view === "payouts") loadTutorPayouts();
 
   window.scrollTo({top:0, behavior:"smooth"});
 }
