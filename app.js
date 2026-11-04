@@ -599,20 +599,54 @@ function toast(message) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => node.classList.remove("show"), 2600);
 }
-function setView(view) {
+
+async function setView(view) {
   const known = ["dashboard","assignments","subjects","calendar","tutoring","materials","payouts"];
+
   if (!known.includes(view)) view = "dashboard";
-  $$(".view").forEach(node => node.classList.toggle("active-view", node.id === `${view}View`));
-  $$(".nav-item[data-view]").forEach(node => node.classList.toggle("active", node.dataset.view === view));
+
+  if (view === "payouts") {
+    const { data: authData } = await supabaseClient.auth.getUser();
+    const user = authData?.user;
+
+    if (!user) {
+      alert("Please sign in first.");
+      return;
+    }
+
+    const { data: roles, error } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    const isAdmin = !error && roles?.some(item => item.role === "admin");
+
+    if (!isAdmin) {
+      alert("Access denied. Administrator access is required.");
+      return;
+    }
+  }
+
+  $$(".view").forEach(node =>
+    node.classList.toggle("active-view", node.id === `${view}View`)
+  );
+
+  $$(".nav-item[data-view]").forEach(node =>
+    node.classList.toggle("active", node.dataset.view === view)
+  );
+
   $("#pageLabel").textContent = view[0].toUpperCase() + view.slice(1);
   $("#sidebar").classList.remove("mobile-open");
+
   if (view === "assignments") renderAssignments();
   if (view === "subjects") renderSubjectsPage();
   if (view === "calendar") renderCalendar();
   if (view === "tutoring") loadTutoringData();
   if (view === "materials") loadStudyMaterials();
+
   window.scrollTo({top:0, behavior:"smooth"});
 }
+
 function openDialog(task = null) {
   $("#assignmentForm").reset();
   $("#assignmentId").value = task?.id || "";
