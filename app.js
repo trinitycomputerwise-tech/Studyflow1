@@ -1333,6 +1333,7 @@ async function loadStudyMaterials() {
   renderStudyMaterials(materials || []);
 }
 
+
 async function loadTutorPayouts() {
   const list = document.getElementById("payoutsList");
   if (!list) return;
@@ -1341,7 +1342,7 @@ async function loadTutorPayouts() {
   const user = authData?.user;
 
   if (!user) {
-    list.innerHTML = "<p>Please sign in first.</p>";
+    list.textContent = "Please sign in first.";
     return;
   }
 
@@ -1353,9 +1354,11 @@ async function loadTutorPayouts() {
   const isAdmin = !roleError && roles?.some(item => item.role === "admin");
 
   if (!isAdmin) {
-    list.innerHTML = "<p>Administrator access required.</p>";
+    list.textContent = "Administrator access required.";
     return;
   }
+
+  list.textContent = "Loading tutor payouts...";
 
   const { data: payouts, error } = await supabaseClient
     .from("tutor_payouts")
@@ -1363,25 +1366,118 @@ async function loadTutorPayouts() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    list.textContent = "Unable to load tutor payouts. Please try again.";
+    list.textContent = "Unable to load tutor payouts.";
     console.error(error);
     return;
   }
 
-  if (!payouts || payouts.length === 0) {
-    list.innerHTML = "<p>No tutor payouts available yet.</p>";
+  const { data: requests, error: requestError } = await supabaseClient
+    .from("tutoring_requests")
+    .select("id, subject, tutor_id, student_id, status, session_completed_at")
+    .eq("status", "Approved")
+    .is("session_completed_at", null);
+
+  if (requestError) {
+    list.textContent = "Unable to load tutoring requests.";
+    console.error(requestError);
     return;
   }
 
-  list.innerHTML = payouts.map(payout => `
-    <div class="panel" style="margin-top:12px;">
-      <p><strong>Tutor ID:</strong> ${escapeHtml(payout.tutor_id)}</p>
-      <p><strong>Student payment:</strong> ₦${Number(payout.student_payment_ngn).toLocaleString("en-NG")}</p>
-      <p><strong>StudyFlow commission:</strong> ₦${Number(payout.platform_commission_ngn).toLocaleString("en-NG")}</p>
-      <p><strong>Tutor earnings:</strong> ₦${Number(payout.tutor_earning_ngn).toLocaleString("en-NG")}</p>
-      <p><strong>Status:</strong> ${escapeHtml(payout.payout_status)}</p>
-    </div>
-  `).join("");
+  const existingRequestIds = new Set(
+    (payouts || []).map(p => p.request_id)
+  );
+
+  const unpaidCheckRequests = (requests || []).filter(
+    r => !existingRequestIds.has(r.id)
+  );
+
+  let paidRequests = [];
+
+  if (unpaidCheckRequests.length > 0) {
+    const { data: payments, error: paymentError } = await supabaseClient
+      .from("tutoring_payments")
+      .select("request_id")
+      .in("request_id", unpaidCheckRequests.map(r => r.id))
+      .eq("status", "Paid");
+
+    if (paymentError) {
+      list.textContent = "Unable to check successful student payments.";
+      console.error(paymentError);
+      return;
+    }
+
+    const paidIds = new Set((payments || []).map(p => p.request_id));
+
+    paidRequests = unpaidCheckRequests.filter(r => paidIds.has(r.id));
+  }
+
+  let html = "<h2>Sessions awaiting confirmation</h2>";
+
+  if (paidRequests.length === 0) {
+    html += "<p>No paid sessions are awaiting confirmation.</p>";
+  } else {
+    html += paidRequests.map(request => `
+      <div class="panel" style="margin-top:12px;">
+        <p><strong>Subject:</strong> ${escapeHtml(request.subject || "Tutoring session")}</p>
+        <p><strong>Tutor ID:</strong> ${escapeHtml(request.tutor_id)}</p>
+        <p><strong>Student ID:</strong> ${escapeHtml(request.student_id)}</p>
+        <p><strong>Status:</strong> Awaiting session confirmation</p>
+        <button
+          class="primary-btn"
+          type="button"
+          data-confirm-request="${escapeHtml(request.id)}"
+        >
+          Confirm completed session
+        </button>
+      </div>
+    `).join("");
+  }
+
+  html += "<h2 style='margin-top:25px;'>Prepared tutor payouts</h2>";
+
+  if (!payouts || payouts.length === 0) {
+    html += "<p>No tutor payouts available yet.</p>";
+  } else {
+    html += payouts.map(payout => `
+      <div class="panel" style="margin-top:12px;">
+        <p><strong>Tutor ID:</strong> ${escapeHtml(payout.tutor_id)}</p>
+        <p><strong>Student payment:</strong> ₦${Number(payout.student_payment_ngn).toLocaleString("en-NG")}</p>
+        <p><strong>StudyFlow commission:</strong> ₦${Number(payout.platform_commission_ngn).toLocaleString("en-NG")}</p>
+        <p><strong>Tutor earnings:</strong> ₦${Number(payout.tutor_earning_ngn).toLocaleString("en-NG")}</p>
+        <p><strong>Status:</strong> ${escapeHtml(payout.payout_status)}</p>
+      </div>
+    `).join("");
+  }
+
+  list.innerHTML = html;
+
+  list.querySelectorAll("[data-confirm-request]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const requestId = button.dataset.confirmRequest;
+
+      if (!confirm("Have you verified that this tutoring session was completed?")) {
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Confirming...";
+
+      const { error: confirmError } = await supabaseClient.rpc(
+        "confirm_tutoring_session",
+        { p_request_id: requestId }
+      );
+
+      if (confirmError) {
+        alert("Confirmation failed: " + confirmError.message);
+        button.disabled = false;
+        button.textContent = "Confirm completed session";
+        return;
+      }
+
+      alert("Session confirmed and tutor payout prepared.");
+      await loadTutorPayouts();
+    });
+  });
 }
 
 function renderStudyMaterials(materials) {
