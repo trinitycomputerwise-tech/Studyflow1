@@ -519,6 +519,63 @@
         </section>
       </section>
 
+      <section class="view" id="quizzesView">
+  <div class="page-intro">
+    <div>
+      <p class="eyebrow">LEARNING AND PRACTICE</p>
+      <h1>Quizzes</h1>
+      <p class="muted">Create quizzes, test your knowledge and review your results.</p>
+    </div>
+  </div>
+
+  <section class="panel" id="quizCreatorPanel" hidden>
+    <h2>Create a Quiz</h2>
+
+    <form id="quizForm">
+      <label for="quizTitle">Quiz title</label>
+      <input id="quizTitle" type="text" maxlength="150"
+        placeholder="e.g. Introduction to Biology" required>
+
+      <label for="quizSubject">Subject</label>
+      <input id="quizSubject" type="text" maxlength="100"
+        placeholder="e.g. Biology" required>
+
+      <label for="quizDescription">Description</label>
+      <textarea id="quizDescription"
+        placeholder="What is this quiz about?"></textarea>
+
+      <div id="quizQuestionBuilder"></div>
+
+      <button type="button" class="secondary-btn" id="addQuizQuestion">
+        + Add Question
+      </button>
+
+      <button type="submit" class="primary-btn">
+        Save Quiz
+      </button>
+
+      <p id="quizFormMessage" class="muted"></p>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Available Quizzes</h2>
+    <div id="quizzesList">
+      <p class="muted">Loading quizzes...</p>
+    </div>
+  </section>
+
+  <section class="panel" id="takeQuizPanel" hidden>
+    <div id="takeQuizContent"></div>
+  </section>
+
+  <section class="panel">
+    <h2>My Quiz Results</h2>
+    <div id="quizResultsList">
+      <p class="muted">Your quiz results will appear here.</p>
+    </div>
+  </section>
+</section>
       <section class="view" id="payoutsView">
   <div class="page-intro">
     <div>
