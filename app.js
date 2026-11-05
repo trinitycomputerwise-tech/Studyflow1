@@ -2065,13 +2065,14 @@ async function loadQuizzes() {
     return;
   }
 
+  const isAdmin = roles?.some(item => item.role === "admin");
   const canManage = roles?.some(item =>
     ["admin", "tutor"].includes(item.role)
   );
 
   const { data: quizzes, error } = await supabaseClient
     .from("quizzes")
-    .select("id, title, subject, description, is_published, created_at")
+    .select("id, created_by, title, subject, description, is_published, created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -2082,20 +2083,33 @@ async function loadQuizzes() {
   if (!quizzes?.length) {
     list.innerHTML = '<p class="muted">No published quizzes available yet.</p>';
   } else {
-    list.innerHTML = quizzes.map(quiz => `
-      <div class="panel" style="margin-top:12px;">
-        <h3>${escapeHtml(quiz.title)}</h3>
-        <p><strong>Subject:</strong> ${escapeHtml(quiz.subject)}</p>
-        <p>${escapeHtml(quiz.description || "")}</p>
-        ${canManage ? `<p class="muted">${quiz.is_published ? "Published" : "Draft"}</p>` : ""}
-        <button
-          type="button"
-          class="primary-btn take-quiz-button"
-          data-quiz-id="${escapeHtml(quiz.id)}">
-          Take Quiz
-        </button>
-      </div>
-    `).join("");
+    list.innerHTML = quizzes.map(quiz => {
+      const canEdit = canManage &&
+        (isAdmin || quiz.created_by === user.id);
+
+      return `
+        <div class="panel" style="margin-top:12px;">
+          <h3>${escapeHtml(quiz.title)}</h3>
+          <p><strong>Subject:</strong> ${escapeHtml(quiz.subject)}</p>
+          <p>${escapeHtml(quiz.description || "")}</p>
+          ${canManage ? `<p class="muted">${quiz.is_published ? "Published" : "Draft"}</p>` : ""}
+          ${canEdit ? `
+            <button
+              type="button"
+              class="secondary-btn edit-quiz-button"
+              data-quiz-id="${escapeHtml(quiz.id)}">
+              Edit Details
+            </button>
+          ` : ""}
+          <button
+            type="button"
+            class="primary-btn take-quiz-button"
+            data-quiz-id="${escapeHtml(quiz.id)}">
+            Take Quiz
+          </button>
+        </div>
+      `;
+    }).join("");
   }
 
   const builder = document.getElementById("quizQuestionBuilder");
@@ -2103,7 +2117,6 @@ async function loadQuizzes() {
     addQuizQuestion();
   }
 }
-
 // Add and remove question fields
 document.getElementById("addQuizQuestion")?.addEventListener(
   "click",
@@ -2363,6 +2376,60 @@ function showQuizResult(result) {
 }
 
 // Connect Take Quiz buttons
+// Edit quiz title, subject and description
+document.getElementById("quizzesList")?.addEventListener(
+  "click",
+  async event => {
+    const button = event.target.closest(".edit-quiz-button");
+    if (!button) return;
+
+    const quizId = button.dataset.quizId;
+    button.disabled = true;
+
+    try {
+      const { data: quiz, error: fetchError } = await supabaseClient
+        .from("quizzes")
+        .select("title, subject, description")
+        .eq("id", quizId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const title = window.prompt("Quiz title:", quiz.title);
+      if (title === null) return;
+
+      const subject = window.prompt("Quiz subject:", quiz.subject);
+      if (subject === null) return;
+
+      const description = window.prompt(
+        "Quiz description:",
+        quiz.description || ""
+      );
+      if (description === null) return;
+
+      const { error } = await supabaseClient.rpc(
+        "update_managed_quiz_details",
+        {
+          p_quiz_id: quizId,
+          p_title: title,
+          p_subject: subject,
+          p_description: description
+        }
+      );
+
+      if (error) throw error;
+
+      alert("Quiz details updated successfully!");
+      await loadQuizzes();
+
+    } catch (error) {
+      console.error("Quiz update error:", error);
+      alert("Could not update quiz: " + error.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+);
 document.getElementById("quizzesList")?.addEventListener(
   "click",
   event => {
