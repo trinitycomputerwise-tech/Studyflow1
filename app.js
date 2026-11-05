@@ -815,7 +815,7 @@ async function loadAdminFinancialOverview() {
     formatNaira(outstanding);
 
   message.textContent =
-    "Based on successful Live Mode payments. Commission and tutor earnings are calculated at 15% and 85%.";
+    "Estimates based on successful Live Mode payments: 15% StudyFlow commission and 85% tutor share. Processing fees are not deducted. Final payouts are prepared only after session confirmation.";
 }
 
 function updateSubjectFilter() {
