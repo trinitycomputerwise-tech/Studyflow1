@@ -87,6 +87,7 @@ exports.handler = async (event) => {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const paystackKey = process.env.PAYSTACK_SECRET_KEY;
+    const paymentMode = paystackKey?.startsWith("sk_live_") ? "live" : "test";
 
     if (!supabaseUrl || !supabaseKey || !paystackKey) {
       return respond(500, { error: "Payment service is not configured" });
@@ -259,7 +260,7 @@ exports.handler = async (event) => {
       amount_ngn: amountNgn,
       reference,
       status: "Pending",
-      payment_mode: process.env.PAYSTACK_SECRET_KEY?.startsWith("sk_live_") ? "live" : "test"
+      payment_mode: paymentMode
     })
   }
 );
