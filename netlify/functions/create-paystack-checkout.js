@@ -244,25 +244,25 @@ exports.handler = async (event) => {
     const reference =
       `studyflow_${request.id}_${Date.now()}_${crypto.randomUUID()}`;
 
-    const paymentInsert = await fetch(
-      `${supabaseUrl}/rest/v1/tutoring_payments`,
-      {
-        method: "POST",
-        headers: {
-          ...dbHeaders,
-          Prefer: "return=minimal"
-        },
-        body: JSON.stringify({
-          request_id: request.id,
-          student_id: student.id,
-          tutor_id: request.tutor_id,
-          amount_ngn: amountNgn,
-          reference,
-          status: "Pending"
-        })
-      }
-    );
-
+  const paymentInsert = await fetch(
+  `${supabaseUrl}/rest/v1/tutoring_payments`,
+  {
+    method: "POST",
+    headers: {
+      ...dbHeaders,
+      Prefer: "return=minimal"
+    },
+    body: JSON.stringify({
+      request_id: request.id,
+      student_id: student.id,
+      tutor_id: request.tutor_id,
+      amount_ngn: amountNgn,
+      reference,
+      status: "Pending",
+      payment_mode: "live"
+    })
+  }
+);
     if (!paymentInsert.ok) {
       const errorText = await paymentInsert.text();
       console.error("Payment record creation failed:", errorText);
