@@ -629,6 +629,7 @@ async function setView(view) {
   );
 
   document.getElementById("quizCreatorPanel").hidden = !canManageQuizzes;
+  document.getElementById("managedQuizResultsPanel").hidden = !canManageQuizzes;
 }
 
   if (view === "payouts") {
@@ -671,6 +672,7 @@ async function setView(view) {
   if (view === "materials") loadStudyMaterials();
   if (view === "payouts") loadTutorPayouts();
   if (view === "quizzes") loadQuizzes();
+  if (view === "quizzes") loadManagedQuizResults();
 
   window.scrollTo({top:0, behavior:"smooth"});
 }
@@ -2408,6 +2410,37 @@ async function loadQuizResults() {
       <h3>${escapeHtml(titles[attempt.quiz_id] || "Quiz")}</h3>
       <p>Score: ${attempt.score} / ${attempt.total_questions}</p>
       <p>Date: ${new Date(attempt.submitted_at).toLocaleString()}</p>
+    </div>
+  `).join("");
+}
+
+// Load results for quizzes managed by the current admin or tutor
+async function loadManagedQuizResults() {
+  const list = document.getElementById("managedQuizResultsList");
+  if (!list) return;
+
+  list.innerHTML = "<p>Loading student results...</p>";
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_managed_quiz_results"
+  );
+
+  if (error) {
+    list.textContent = "Could not load student results: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    list.innerHTML = "<p>No student quiz submissions yet.</p>";
+    return;
+  }
+
+  list.innerHTML = data.map(item => `
+    <div class="panel" style="margin-top:10px;">
+      <h3>${escapeHtml(item.student_name || "Student")}</h3>
+      <p>Quiz: ${escapeHtml(item.quiz_title || "Quiz")}</p>
+      <p>Score: ${item.score} / ${item.total_questions}</p>
+      <p>Date: ${new Date(item.submitted_at).toLocaleString()}</p>
     </div>
   `).join("");
 }
