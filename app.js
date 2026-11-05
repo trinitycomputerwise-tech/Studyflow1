@@ -601,7 +601,7 @@ function toast(message) {
 }
 
 async function setView(view) {
-  const known = ["dashboard","assignments","subjects","calendar","tutoring","materials","payouts"];
+  const known = ["dashboard","assignments","subjects","calendar","tutoring","materials","payouts","quizzes"];
 
   if (!known.includes(view)) view = "dashboard";
 
