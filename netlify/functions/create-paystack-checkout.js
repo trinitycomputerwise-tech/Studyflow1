@@ -84,16 +84,11 @@ exports.handler = async (event) => {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const paystackKey = process.env.PAYSTACK_SECRET_KEY;
     const paymentMode = paystackKey?.startsWith("sk_live_") ? "live" : "test";
-
-    if (event.httpMethod === "GET") {
-      return respond(200, { paymentMode });
-    }
+    
 
     if (event.httpMethod !== "POST") {
       return respond(405, { error: "Method not allowed" });
     }
-
-    console.log("StudyFlow Paystack mode:", paymentMode);
 
 
     if (!supabaseUrl || !supabaseKey || !paystackKey) {
