@@ -259,7 +259,7 @@ exports.handler = async (event) => {
       amount_ngn: amountNgn,
       reference,
       status: "Pending",
-      payment_mode: "live"
+      payment_mode: process.env.PAYSTACK_SECRET_KEY?.startsWith("sk_live_") ? "live" : "test"
     })
   }
 );
