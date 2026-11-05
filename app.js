@@ -1399,6 +1399,7 @@ async function loadTutorPayouts() {
       .select("request_id")
       .in("request_id", unpaidCheckRequests.map(r => r.id))
       .eq("status", "Paid");
+      .eq("payment_mode", "live");
 
     if (paymentError) {
       list.textContent = "Unable to check successful student payments.";
