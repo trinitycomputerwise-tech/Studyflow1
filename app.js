@@ -605,6 +605,32 @@ async function setView(view) {
 
   if (!known.includes(view)) view = "dashboard";
 
+  if (view === "quizzes") {
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  const { data: roles, error } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  if (error) {
+    alert("Could not verify your account role.");
+    return;
+  }
+
+  const canManageQuizzes = roles?.some(item =>
+    ["admin", "tutor"].includes(item.role)
+  );
+
+  document.getElementById("quizCreatorPanel").hidden = !canManageQuizzes;
+}
+
   if (view === "payouts") {
     const { data: authData } = await supabaseClient.auth.getUser();
     const user = authData?.user;
@@ -644,6 +670,7 @@ async function setView(view) {
   if (view === "tutoring") loadTutoringData();
   if (view === "materials") loadStudyMaterials();
   if (view === "payouts") loadTutorPayouts();
+  if (view === "quizzes") loadQuizzes();
 
   window.scrollTo({top:0, behavior:"smooth"});
 }
