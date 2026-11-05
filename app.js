@@ -2421,9 +2421,7 @@ async function loadManagedQuizResults() {
 
   list.innerHTML = "<p>Loading student results...</p>";
 
-  const { data, error } = await supabaseClient.rpc(
-    "get_managed_quiz_results"
-  );
+  const { data, error } = await supabaseClient.rpc("get_managed_quiz_results");
 
   if (error) {
     list.textContent = "Could not load student results: " + error.message;
@@ -2441,6 +2439,19 @@ async function loadManagedQuizResults() {
       <p>Quiz: ${escapeHtml(item.quiz_title || "Quiz")}</p>
       <p>Score: ${item.score} / ${item.total_questions}</p>
       <p>Date: ${new Date(item.submitted_at).toLocaleString()}</p>
+      <button
+        type="button"
+        class="review-quiz-attempt-button"
+        data-attempt-id="${escapeHtml(item.attempt_id)}">
+        Review answers
+      </button>
     </div>
   `).join("");
+
+  list.onclick = async (event) => {
+    const button = event.target.closest(".review-quiz-attempt-button");
+    if (!button) return;
+
+    await loadManagedQuizAttemptDetails(button.dataset.attemptId);
+  };
 }
