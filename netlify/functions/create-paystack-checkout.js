@@ -95,11 +95,6 @@ exports.handler = async (event) => {
 
     console.log("StudyFlow Paystack mode:", paymentMode);
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const paystackKey = process.env.PAYSTACK_SECRET_KEY;
-    const paymentMode = paystackKey?.startsWith("sk_live_") ? "live" : "test";
-    console.log("StudyFlow Paystack mode:", paymentMode);
 
     if (!supabaseUrl || !supabaseKey || !paystackKey) {
       return respond(500, { error: "Payment service is not configured" });
