@@ -76,7 +76,7 @@ exports.handler = async (event) => {
     lookupUrl.searchParams.set("reference", `eq.${reference}`);
     lookupUrl.searchParams.set(
       "select",
-      "id,request_id,student_id,tutor_id,amount_ngn,status"
+      "id,request_id,student_id,tutor_id,amount_ngn,status,payment_mode"
     );
 
     const lookup = await fetch(lookupUrl, {
@@ -96,6 +96,13 @@ exports.handler = async (event) => {
 
     if (!payment) {
       return { statusCode: 200, body: "No matching payment" };
+    }
+
+    const expectedMode = secretKey.startsWith("sk_live_") ? "live" : "test";
+
+    if (payment.payment_mode !== expectedMode) {
+      console.error("Payment mode mismatch:", reference);
+      return { statusCode: 200, body: "Payment mode mismatch" };
     }
 
     if (payment.status === "Paid") {
