@@ -1446,11 +1446,59 @@ async function loadTutorPayouts() {
         <p><strong>StudyFlow commission:</strong> ₦${Number(payout.platform_commission_ngn).toLocaleString("en-NG")}</p>
         <p><strong>Tutor earnings:</strong> ₦${Number(payout.tutor_earning_ngn).toLocaleString("en-NG")}</p>
         <p><strong>Status:</strong> ${escapeHtml(payout.payout_status)}</p>
+        ${payout.payout_status === "Ready for payout" ? `
+          <button class="primary-btn" type="button" data-mark-paid="${escapeHtml(payout.id)}">
+            Mark as Paid
+          </button>
+`         : ""}
       </div>
     `).join("");
   }
 
   list.innerHTML = html;
+  list.querySelectorAll("[data-mark-paid]").forEach(button => {
+  button.addEventListener("click", async () => {
+    const payoutId = button.dataset.markPaid;
+
+    const payoutReference = prompt(
+      "Enter the bank transfer reference from your bank receipt:"
+    );
+
+    if (payoutReference === null) return;
+
+    const cleanReference = payoutReference.trim();
+
+    if (!cleanReference || cleanReference.length > 200) {
+      alert("Enter a valid transfer reference (1–200 characters).");
+      return;
+    }
+
+    if (!confirm("Have you already completed the bank transfer to the tutor?")) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+
+    const { error: payoutError } = await supabaseClient.rpc(
+      "mark_tutor_payout_paid",
+      {
+        p_payout_id: payoutId,
+        p_payout_reference: cleanReference
+      }
+    );
+
+    if (payoutError) {
+      alert("Could not record tutor payment: " + payoutError.message);
+      button.disabled = false;
+      button.textContent = "Mark as Paid";
+      return;
+    }
+
+    alert("Tutor payment recorded successfully.");
+    await loadTutorPayouts();
+  });
+});
 
   list.querySelectorAll("[data-confirm-request]").forEach(button => {
     button.addEventListener("click", async () => {
