@@ -2447,6 +2447,114 @@ document.getElementById("quizzesList")?.addEventListener(
   }
 );
 
+// Edit quiz questions
+document.getElementById("quizzesList")?.addEventListener(
+  "click",
+  async event => {
+    const button = event.target.closest(".edit-quiz-questions-button");
+    if (!button) return;
+
+    const quizId = button.dataset.quizId;
+    button.disabled = true;
+
+    try {
+      const { data: attempts, error: attemptsError } = await supabaseClient
+        .from("quiz_attempts")
+        .select("id")
+        .eq("quiz_id", quizId)
+        .limit(1);
+
+      if (attemptsError) throw attemptsError;
+
+      if (attempts && attempts.length > 0) {
+        alert("Questions are locked because a student has already attempted this quiz. Existing results are protected.");
+        return;
+      }
+
+      const { data: existingQuestions, error: questionsError } =
+        await supabaseClient
+          .from("quiz_questions")
+          .select("question_text, options, correct_option_index")
+          .eq("quiz_id", quizId)
+          .order("created_at", { ascending: true });
+
+      if (questionsError) throw questionsError;
+
+      const questions = [];
+
+      for (let i = 0; i < existingQuestions.length; i++) {
+        const current = existingQuestions[i];
+
+        const questionText = window.prompt(
+          `Question ${i + 1}:`,
+          current.question_text
+        );
+
+        if (questionText === null) return;
+        if (!questionText.trim()) {
+          alert("Question text cannot be empty.");
+          return;
+        }
+
+        const options = [];
+
+        for (let j = 0; j < 4; j++) {
+          const option = window.prompt(
+            `Question ${i + 1} — Option ${j + 1}:`,
+            current.options[j] || ""
+          );
+
+          if (option === null) return;
+          if (!option.trim()) {
+            alert("All four options must be filled in.");
+            return;
+          }
+
+          options.push(option.trim());
+        }
+
+        const correctAnswer = window.prompt(
+          `Question ${i + 1}: Enter the correct option number (1–4):`,
+          String(current.correct_option_index + 1)
+        );
+
+        if (correctAnswer === null) return;
+
+        const correctIndex = Number(correctAnswer) - 1;
+
+        if (!Number.isInteger(correctIndex) || correctIndex < 0 || correctIndex > 3) {
+          alert("Please enter a number from 1 to 4.");
+          return;
+        }
+
+        questions.push({
+          question_text: questionText.trim(),
+          options,
+          correct_option_index: correctIndex
+        });
+      }
+
+      const { error } = await supabaseClient.rpc(
+        "update_managed_quiz_questions",
+        {
+          p_quiz_id: quizId,
+          p_questions: questions
+        }
+      );
+
+      if (error) throw error;
+
+      alert("Quiz questions updated successfully!");
+      await loadQuizzes();
+
+    } catch (error) {
+      console.error("Quiz question update error:", error);
+      alert("Could not update questions: " + error.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+);
 // Load a student's previous quiz results
 async function loadQuizResults() {
   const list = document.getElementById("quizResultsList");
