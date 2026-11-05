@@ -2229,12 +2229,185 @@ document.getElementById("quizForm")?.addEventListener(
 );
 
 // Load quizzes when the Quiz page is opened
+// ===============================
+// STUDENT TAKE QUIZ
+// ===============================
+
+async function takeQuiz(quizId) {
+  const panel = document.getElementById("takeQuizPanel");
+  const content = document.getElementById("takeQuizContent");
+
+  panel.hidden = false;
+  content.innerHTML = "<p>Loading quiz questions...</p>";
+  panel.scrollIntoView({ behavior: "smooth" });
+
+  try {
+    const { data: questions, error } = await supabaseClient.rpc(
+      "get_quiz_questions",
+      { p_quiz_id: quizId }
+    );
+
+    if (error) throw error;
+
+    if (!questions || questions.length === 0) {
+      content.textContent = "No questions are available for this quiz.";
+      return;
+    }
+
+    content.innerHTML = `
+      <h2>Take Quiz</h2>
+      <form id="studentQuizForm">
+        ${questions.map((q, index) => `
+          <div class="panel" style="margin-top:15px;">
+            <h3>Question ${index + 1}</h3>
+            <p>${escapeHtml(q.question_text)}</p>
+
+            ${q.options.map((option, optionIndex) => `
+              <label style="display:block; margin:10px 0;">
+                <input
+                  type="radio"
+                  name="question_${index}"
+                  value="${optionIndex}"
+                  required
+                >
+                ${escapeHtml(option)}
+              </label>
+            `).join("")}
+          </div>
+        `).join("")}
+
+        <button type="submit" class="primary-btn">
+          Submit Answers
+        </button>
+      </form>
+      <p id="quizSubmitMessage" class="muted"></p>
+    `;
+
+    document.getElementById("studentQuizForm").addEventListener(
+      "submit",
+      async event => {
+        event.preventDefault();
+
+        const answers = {};
+
+        questions.forEach((question, index) => {
+          const selected = document.querySelector(
+            `input[name="question_${index}"]:checked`
+          );
+
+          answers[question.id] = Number(selected.value);
+        });
+
+        const submitButton = event.currentTarget.querySelector(
+          'button[type="submit"]'
+        );
+
+        submitButton.disabled = true;
+        document.getElementById("quizSubmitMessage").textContent =
+          "Marking your answers...";
+
+        try {
+          const { data: result, error: submitError } =
+            await supabaseClient.rpc("submit_quiz_attempt", {
+              p_quiz_id: quizId,
+              p_answers: answers
+            });
+
+          if (submitError) throw submitError;
+
+          showQuizResult(result);
+          await loadQuizResults();
+
+        } catch (error) {
+          document.getElementById("quizSubmitMessage").textContent =
+            "Could not submit quiz: " + error.message;
+          submitButton.disabled = false;
+        }
+      }
+    );
+
+  } catch (error) {
+    content.textContent = "Could not load quiz: " + error.message;
+  }
+}
+
+// Display score and correct answers
+function showQuizResult(result) {
+  const content = document.getElementById("takeQuizContent");
+
+  const percentage = result.total_questions
+    ? Math.round((result.score / result.total_questions) * 100)
+    : 0;
+
+  content.innerHTML = `
+    <h2>Quiz Results</h2>
+    <h3>Your Score: ${result.score} / ${result.total_questions}</h3>
+    <p>Percentage: ${percentage}%</p>
+
+    ${result.results.map((item, index) => `
+      <div class="panel" style="margin-top:12px;">
+        <h3>Question ${index + 1}</h3>
+        <p>${escapeHtml(item.question_text)}</p>
+        <p>Your answer: ${escapeHtml(
+          item.options[item.selected_index] ?? "Not answered"
+        )}</p>
+        <p>Correct answer: <strong>${escapeHtml(
+          item.options[item.correct_index]
+        )}</strong></p>
+        <p>${item.is_correct ? "Correct!" : "Incorrect"}</p>
+      </div>
+    `).join("")}
+  `;
+}
+
+// Connect Take Quiz buttons
 document.getElementById("quizzesList")?.addEventListener(
   "click",
   event => {
     const button = event.target.closest(".take-quiz-button");
     if (!button) return;
 
-    alert("The quiz-taking feature is the next step we will connect.");
+    takeQuiz(button.dataset.quizId);
   }
 );
+
+// Load a student's previous quiz results
+async function loadQuizResults() {
+  const list = document.getElementById("quizResultsList");
+  if (!list) return;
+
+  const { data: attempts, error } = await supabaseClient
+    .from("quiz_attempts")
+    .select("id, quiz_id, score, total_questions, submitted_at")
+    .order("submitted_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Could not load quiz results: " + error.message;
+    return;
+  }
+
+  if (!attempts || attempts.length === 0) {
+    list.innerHTML = "<p>No quiz attempts yet.</p>";
+    return;
+  }
+
+  const quizIds = [...new Set(attempts.map(item => item.quiz_id))];
+
+  const { data: quizzes } = await supabaseClient
+    .from("quizzes")
+    .select("id, title")
+    .in("id", quizIds);
+
+  const titles = {};
+  (quizzes || []).forEach(quiz => {
+    titles[quiz.id] = quiz.title;
+  });
+
+  list.innerHTML = attempts.map(attempt => `
+    <div class="panel" style="margin-top:10px;">
+      <h3>${escapeHtml(titles[attempt.quiz_id] || "Quiz")}</h3>
+      <p>Score: ${attempt.score} / ${attempt.total_questions}</p>
+      <p>Date: ${new Date(attempt.submitted_at).toLocaleString()}</p>
+    </div>
+  `).join("");
+}
