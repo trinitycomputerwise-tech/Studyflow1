@@ -1989,3 +1989,252 @@ function escapeHtml(value) {
     "'": "&#39;"
   })[char]);
 }
+
+// ===============================
+// STUDYFLOW QUIZ CREATION
+// ===============================
+
+function addQuizQuestion() {
+  const builder = document.getElementById("quizQuestionBuilder");
+  if (!builder) return;
+
+  const number = builder.children.length + 1;
+
+  const question = document.createElement("div");
+  question.className = "panel quiz-question-item";
+  question.style.marginTop = "15px";
+
+  question.innerHTML = `
+    <h3>Question ${number}</h3>
+
+    <label>Question</label>
+    <textarea class="quiz-question-text"
+      placeholder="Enter your question" required></textarea>
+
+    <label>Option A</label>
+    <input class="quiz-option" required placeholder="Option A">
+
+    <label>Option B</label>
+    <input class="quiz-option" required placeholder="Option B">
+
+    <label>Option C</label>
+    <input class="quiz-option" required placeholder="Option C">
+
+    <label>Option D</label>
+    <input class="quiz-option" required placeholder="Option D">
+
+    <label>Correct answer</label>
+    <select class="quiz-correct-answer">
+      <option value="0">Option A</option>
+      <option value="1">Option B</option>
+      <option value="2">Option C</option>
+      <option value="3">Option D</option>
+    </select>
+
+    <button type="button" class="secondary-btn remove-quiz-question">
+      Remove Question
+    </button>
+  `;
+
+  builder.appendChild(question);
+}
+
+async function loadQuizzes() {
+  const list = document.getElementById("quizzesList");
+  if (!list) return;
+
+  list.innerHTML = '<p class="muted">Loading quizzes...</p>';
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    list.textContent = "Please sign in to view quizzes.";
+    return;
+  }
+
+  const { data: roles, error: roleError } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  if (roleError) {
+    list.textContent = "Could not check your account permissions.";
+    return;
+  }
+
+  const canManage = roles?.some(item =>
+    ["admin", "tutor"].includes(item.role)
+  );
+
+  const { data: quizzes, error } = await supabaseClient
+    .from("quizzes")
+    .select("id, title, subject, description, is_published, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Could not load quizzes: " + error.message;
+    return;
+  }
+
+  if (!quizzes?.length) {
+    list.innerHTML = '<p class="muted">No published quizzes available yet.</p>';
+  } else {
+    list.innerHTML = quizzes.map(quiz => `
+      <div class="panel" style="margin-top:12px;">
+        <h3>${escapeHtml(quiz.title)}</h3>
+        <p><strong>Subject:</strong> ${escapeHtml(quiz.subject)}</p>
+        <p>${escapeHtml(quiz.description || "")}</p>
+        ${canManage ? `<p class="muted">${quiz.is_published ? "Published" : "Draft"}</p>` : ""}
+        <button
+          type="button"
+          class="primary-btn take-quiz-button"
+          data-quiz-id="${escapeHtml(quiz.id)}">
+          Take Quiz
+        </button>
+      </div>
+    `).join("");
+  }
+
+  const builder = document.getElementById("quizQuestionBuilder");
+  if (canManage && builder && builder.children.length === 0) {
+    addQuizQuestion();
+  }
+}
+
+// Add and remove question fields
+document.getElementById("addQuizQuestion")?.addEventListener(
+  "click",
+  addQuizQuestion
+);
+
+document.getElementById("quizQuestionBuilder")?.addEventListener(
+  "click",
+  event => {
+    if (event.target.classList.contains("remove-quiz-question")) {
+      event.target.closest(".quiz-question-item")?.remove();
+
+      document.querySelectorAll(".quiz-question-item h3").forEach((heading, index) => {
+        heading.textContent = `Question ${index + 1}`;
+      });
+    }
+  }
+);
+
+// Save a new quiz and its questions
+document.getElementById("quizForm")?.addEventListener(
+  "submit",
+  async event => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const message = document.getElementById("quizFormMessage");
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    const title = document.getElementById("quizTitle").value.trim();
+    const subject = document.getElementById("quizSubject").value.trim();
+    const description = document.getElementById("quizDescription").value.trim();
+
+    const questionItems = [
+      ...document.querySelectorAll(".quiz-question-item")
+    ];
+
+    if (!questionItems.length) {
+      message.textContent = "Please add at least one question.";
+      return;
+    }
+
+    const questions = [];
+
+    for (const item of questionItems) {
+      const questionText = item.querySelector(".quiz-question-text").value.trim();
+      const options = [...item.querySelectorAll(".quiz-option")]
+        .map(input => input.value.trim());
+      const correctIndex = Number(
+        item.querySelector(".quiz-correct-answer").value
+      );
+
+      if (!questionText || options.some(option => !option)) {
+        message.textContent = "Please complete every question and answer option.";
+        return;
+      }
+
+      questions.push({
+        question_text: questionText,
+        options,
+        correct_option_index: correctIndex
+      });
+    }
+
+    submitButton.disabled = true;
+    message.textContent = "Saving your quiz...";
+
+    try {
+      const { data: authData } = await supabaseClient.auth.getUser();
+      const user = authData?.user;
+
+      if (!user) {
+        message.textContent = "Please sign in first.";
+        return;
+      }
+
+      const { data: quiz, error: quizError } = await supabaseClient
+        .from("quizzes")
+        .insert({
+          created_by: user.id,
+          title,
+          subject,
+          description,
+          is_published: true
+        })
+        .select()
+        .single();
+
+      if (quizError) throw quizError;
+
+      const questionRows = questions.map(question => ({
+        quiz_id: quiz.id,
+        question_text: question.question_text,
+        options: question.options,
+        correct_option_index: question.correct_option_index
+      }));
+
+      const { error: questionsError } = await supabaseClient
+        .from("quiz_questions")
+        .insert(questionRows);
+
+      if (questionsError) {
+        await supabaseClient
+          .from("quizzes")
+          .delete()
+          .eq("id", quiz.id);
+
+        throw questionsError;
+      }
+
+      form.reset();
+      document.getElementById("quizQuestionBuilder").innerHTML = "";
+      addQuizQuestion();
+
+      message.textContent = "Quiz created and published successfully!";
+      await loadQuizzes();
+
+    } catch (error) {
+      console.error("StudyFlow quiz creation error:", error);
+      message.textContent = "Could not save quiz: " + error.message;
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+);
+
+// Load quizzes when the Quiz page is opened
+document.getElementById("quizzesList")?.addEventListener(
+  "click",
+  event => {
+    const button = event.target.closest(".take-quiz-button");
+    if (!button) return;
+
+    alert("The quiz-taking feature is the next step we will connect.");
+  }
+);
