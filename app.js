@@ -2100,18 +2100,14 @@ async function loadQuizzes() {
               data-quiz-id="${escapeHtml(quiz.id)}">
               Edit Details
             </button>
-            ${canEdit ? `
-              <button
-                type="button"
-                class="secondary-btn edit-quiz-questions-button"
-                data-quiz-id="${escapeHtml(quiz.id)}">
-                Edit Questions
+            <button
+              type="button"
+              class="secondary-btn edit-quiz-questions-button"
+              data-quiz-id="${escapeHtml(quiz.id)}">
+              Edit Questions
             </button>
           ` : ""}
-          <button
-            type="button"
-            class="primary-btn take-quiz-button"
-            data-quiz-id="${escapeHtml(quiz.id)}">
+          DIL0
             Take Quiz
           </button>
         </div>
