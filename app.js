@@ -2455,3 +2455,62 @@ async function loadManagedQuizResults() {
     await loadManagedQuizAttemptDetails(button.dataset.attemptId);
   };
 }
+
+async function loadManagedQuizAttemptDetails(attemptId) {
+  const details = document.getElementById("managedQuizAttemptDetails");
+  if (!details) return;
+
+  details.innerHTML = "<p>Loading quiz answers...</p>";
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_managed_quiz_attempt_details",
+    { p_attempt_id: attemptId }
+  );
+
+  if (error) {
+    details.textContent = "Could not load quiz answers: " + error.message;
+    return;
+  }
+
+  if (!data) {
+    details.textContent = "No quiz details were found.";
+    return;
+  }
+
+  const questionsHtml = (data.results || []).map((item, index) => {
+    const options = Array.isArray(item.options) ? item.options : [];
+    const selectedIndex = Number.isInteger(item.selected_index)
+      ? item.selected_index
+      : null;
+    const correctIndex = item.correct_index;
+
+    return `
+      <div class="panel" style="margin-top:10px;">
+        <h4>Question ${index + 1}: ${escapeHtml(item.question_text)}</h4>
+        <p><strong>Student's answer:</strong>
+          ${selectedIndex !== null && options[selectedIndex] !== undefined
+            ? escapeHtml(options[selectedIndex])
+            : "Not answered"}
+        </p>
+        <p><strong>Correct answer:</strong>
+          ${options[correctIndex] !== undefined
+            ? escapeHtml(options[correctIndex])
+            : "Unavailable"}
+        </p>
+        <p><strong>Result:</strong>
+          ${item.is_correct ? "Correct" : "Incorrect"}
+        </p>
+      </div>
+    `;
+  }).join("");
+
+  details.innerHTML = `
+    <h3>Answer Review</h3>
+    <p><strong>Student:</strong> ${escapeHtml(data.student_name || "Student")}</p>
+    <p><strong>Quiz:</strong> ${escapeHtml(data.quiz_title || "Quiz")}</p>
+    <p><strong>Score:</strong> ${data.score} / ${data.total_questions}</p>
+    ${questionsHtml}
+  `;
+
+  details.scrollIntoView({ behavior: "smooth", block: "start" });
+}
