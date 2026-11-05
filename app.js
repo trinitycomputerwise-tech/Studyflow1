@@ -733,8 +733,91 @@ function renderActivity() {
   }).join("") : `<p class="muted small">Your recent changes will appear here.</p>`;
 }
 function renderDashboard() {
-  renderStats(); renderUpcoming(); renderSubjectOverview(); renderActivity(); updateSubjectFilter();
+  renderStats();
+  renderUpcoming();
+  renderSubjectOverview();
+  renderActivity();
+  updateSubjectFilter();
+  loadAdminFinancialOverview();
 }
+
+async function loadAdminFinancialOverview() {
+  const panel = document.getElementById("adminFinancialOverview");
+  if (!panel) return;
+
+  panel.hidden = true;
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) return;
+
+  const { data: roles, error: roleError } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  const isAdmin = !roleError && roles?.some(item => item.role === "admin");
+
+  if (!isAdmin) return;
+
+  panel.hidden = false;
+
+  const message = document.getElementById("adminFinancialMessage");
+  message.textContent = "Loading financial figures...";
+
+  const { data: payments, error: paymentError } = await supabaseClient
+    .from("tutoring_payments")
+    .select("amount_ngn")
+    .eq("status", "Paid")
+    .eq("payment_mode", "live");
+
+  if (paymentError) {
+    message.textContent = "Unable to load financial figures.";
+    console.error(paymentError);
+    return;
+  }
+
+  const { data: payouts, error: payoutError } = await supabaseClient
+    .from("tutor_payouts")
+    .select("platform_commission_ngn, tutor_earning_ngn, payout_status");
+
+  if (payoutError) {
+    message.textContent = "Unable to load payout figures.";
+    console.error(payoutError);
+    return;
+  }
+
+  const totalRevenue = (payments || []).reduce(
+    (sum, payment) => sum + Number(payment.amount_ngn || 0), 0
+  );
+
+  const commission = Math.round(totalRevenue * 0.15);
+  const tutorEarnings = totalRevenue - commission;
+
+  const outstanding = (payouts || [])
+    .filter(payout => payout.payout_status === "Ready for payout")
+    .reduce((sum, payout) => sum + Number(payout.tutor_earning_ngn || 0), 0);
+
+  const formatNaira = amount =>
+    "₦" + amount.toLocaleString("en-NG");
+
+  document.getElementById("adminTotalRevenue").textContent =
+    formatNaira(totalRevenue);
+
+  document.getElementById("adminCommission").textContent =
+    formatNaira(commission);
+
+  document.getElementById("adminTutorEarnings").textContent =
+    formatNaira(tutorEarnings);
+
+  document.getElementById("adminOutstandingPayouts").textContent =
+    formatNaira(outstanding);
+
+  message.textContent =
+    "Based on successful Live Mode payments. Commission and tutor earnings are calculated at 15% and 85%.";
+}
+
 function updateSubjectFilter() {
   const select = $("#subjectFilter");
   if (!select) return;
