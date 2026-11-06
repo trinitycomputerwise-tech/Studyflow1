@@ -419,6 +419,99 @@
   #welcomeView .panel {
     padding: 18px;
   }
+  /* StudyFlow public homepage */
+#public-homepage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef5ff, #ffffff, #eaf2ff);
+  padding: 25px;
+}
+
+.public-header {
+  max-width: 1100px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.public-header h2 {
+  color: #3478f6;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.public-header button,
+#public-get-started-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  margin: 4px;
+  font-weight: 700;
+  background: #3478f6;
+  color: white;
+}
+
+.public-hero {
+  max-width: 850px;
+  margin: 100px auto;
+  text-align: center;
+}
+
+.public-hero h1 {
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.2;
+  color: #142544;
+}
+
+.public-hero p {
+  font-size: 18px;
+  color: #64748b;
+}
+
+.public-hero ul {
+  list-style: none;
+  padding: 0;
+  margin: 35px 0;
+  line-height: 2.5;
+  font-size: 17px;
+  color: #334155;
+}
+
+.public-hero li::before {
+  content: "✓ ";
+  color: #139c69;
+  font-weight: 800;
+}
+
+#public-get-started-button {
+  padding: 16px 25px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.public-header button {
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  #public-homepage {
+    padding: 15px;
+  }
+
+  .public-header h2 {
+    font-size: 22px;
+  }
+
+  .public-header button {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .public-hero {
+    margin: 75px auto;
+  }
+}
 
   #welcomeView .stat-card {
     padding: 15px;
