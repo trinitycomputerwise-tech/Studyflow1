@@ -1104,14 +1104,40 @@ const authUser = document.getElementById("auth-user");
 function showAuthMessage(message) {
   if (authMessage) authMessage.textContent = message;
 }
+// StudyFlow public homepage buttons
+const publicHomepage = document.getElementById("public-homepage");
 
+document.getElementById("public-login-button")?.addEventListener("click", () => {
+  publicHomepage.hidden = true;
+  document.getElementById("auth-section").hidden = false;
+});
+
+document.getElementById("public-signup-button")?.addEventListener("click", () => {
+  publicHomepage.hidden = true;
+  document.getElementById("auth-section").hidden = false;
+  document.getElementById("auth-form").hidden = false;
+  document.getElementById("login-button").hidden = true;
+  document.getElementById("signup-button").hidden = false;
+});
+
+document.getElementById("public-get-started-button")?.addEventListener("click", () => {
+  document.getElementById("public-signup-button").click();
+});
 function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
 
+const publicHomepage = document.getElementById("public-homepage");
+const resetSection = document.getElementById("reset-password-section");
+const isResettingPassword = resetSection && !resetSection.hidden;
+
+if (publicHomepage) {
+  publicHomepage.hidden = Boolean(user) || isResettingPassword;
+}
+
 if (authSection) {
   authSection.hidden =
-    Boolean(user) || !document.getElementById("reset-password-section")?.hidden;
+    Boolean(user) || (!publicHomepage.hidden) || isResettingPassword;
 }
 
  if (dashboard) {
