@@ -2107,9 +2107,12 @@ async function loadQuizzes() {
               Edit Questions
             </button>
           ` : ""}
-          DIL0
-            Take Quiz
-          </button>
+         <button
+          type="button"
+          class="primary-btn take-quiz-button"
+          data-quiz-id="${escapeHtml(quiz.id)}">
+          Take Quiz
+        </button>
         </div>
       `;
     }).join("");
