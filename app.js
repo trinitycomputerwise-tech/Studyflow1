@@ -1207,7 +1207,13 @@ authForm?.addEventListener("submit", async (event) => {
   }
 
   updateAuthUI(data.user);
-  showAuthMessage("Login successful!");
+
+if (openTutoringAfterLogin) {
+  openTutoringAfterLogin = false;
+  setView("tutoring");
+}
+
+showAuthMessage("Login successful!");
 });
 
 // Create new accounts
