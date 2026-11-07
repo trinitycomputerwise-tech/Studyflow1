@@ -553,3 +553,181 @@
   color: #139c69;
   font-weight: 800;
 }
+
+/* ===== StudyFlow AI Chatbot ===== */
+#studyflow-ai-widget {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  font-family: inherit;
+}
+
+#studyflow-ai-toggle {
+  background: #3157d5;
+  color: #fff;
+  border: 0;
+  border-radius: 30px;
+  padding: 15px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 5px 20px rgba(0,0,0,.2);
+}
+
+#studyflow-ai-panel {
+  position: absolute;
+  right: 0;
+  bottom: 65px;
+  width: min(360px, calc(100vw - 32px));
+  height: 500px;
+  max-height: calc(100vh - 110px);
+  background: #fff;
+  color: #172033;
+  border: 1px solid #dce2ee;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.2);
+  overflow: hidden;
+  flex-direction: column;
+}
+
+#studyflow-ai-panel:not([hidden]) {
+  display: flex;
+}
+
+.sf-ai-header {
+  background: #3157d5;
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sf-ai-header strong,
+.sf-ai-header small {
+  display: block;
+}
+
+.sf-ai-header small {
+  margin-top: 4px;
+  opacity: .85;
+}
+
+#studyflow-ai-close {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+#studyflow-ai-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.sf-ai-welcome,
+.sf-ai-message {
+  background: #eef2ff;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 0 0 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sf-ai-message.user {
+  background: #e1f2ff;
+  margin-left: 35px;
+}
+
+.sf-ai-message.assistant {
+  margin-right: 25px;
+}
+
+#studyflow-ai-form {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+#studyflow-ai-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 45px;
+  max-height: 100px;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px;
+  font: inherit;
+}
+
+#studyflow-ai-send,
+#studyflow-support-form button {
+  background: #3157d5;
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#studyflow-ai-send:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+#studyflow-support-toggle {
+  width: 100%;
+  padding: 12px;
+  background: #f3f5fa;
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  color: #3157d5;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#studyflow-support-form {
+  padding: 12px;
+  border-top: 1px solid #e5e7eb;
+  gap: 8px;
+}
+
+#studyflow-support-form:not([hidden]) {
+  display: grid;
+}
+
+#studyflow-support-form input,
+#studyflow-support-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+}
+
+#studyflow-support-form textarea {
+  min-height: 75px;
+  resize: vertical;
+}
+
+#studyflow-support-status {
+  font-size: 13px;
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  #studyflow-ai-widget {
+    right: 12px;
+    bottom: 12px;
+  }
+}
