@@ -517,3 +517,39 @@
     padding: 15px;
   }
 }
+/* Public tutoring services section */
+.public-tutoring {
+  max-width: 850px;
+  margin: 60px auto 100px;
+  padding: 35px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(20, 37, 68, 0.08);
+  text-align: center;
+}
+
+.public-tutoring h2 {
+  color: #142544;
+  font-size: 30px;
+  margin-bottom: 18px;
+}
+
+.public-tutoring p {
+  color: #64748b;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.public-tutoring ul {
+  list-style: none;
+  padding: 0;
+  margin: 25px 0;
+  line-height: 2.2;
+  color: #334155;
+}
+
+.public-tutoring li::before {
+  content: "✓ ";
+  color: #139c69;
+  font-weight: 800;
+}
