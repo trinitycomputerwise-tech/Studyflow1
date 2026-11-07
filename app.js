@@ -1123,6 +1123,18 @@ document.getElementById("public-signup-button")?.addEventListener("click", () =>
 document.getElementById("public-get-started-button")?.addEventListener("click", () => {
   document.getElementById("public-signup-button").click();
 });
+let openTutoringAfterLogin = false;
+
+document.getElementById("public-explore-tutors-button")
+  ?.addEventListener("click", () => {
+    openTutoringAfterLogin = true;
+
+    document.getElementById("public-homepage").hidden = true;
+    document.getElementById("auth-section").hidden = false;
+    document.getElementById("auth-form").hidden = false;
+    document.getElementById("login-button").hidden = false;
+    document.getElementById("signup-button").hidden = false;
+  });
 function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
