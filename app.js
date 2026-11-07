@@ -8,6 +8,28 @@ const supabaseClient = window.supabase.createClient(
   SUPABASE_PUBLISHABLE_KEY
 );
 
+
+/* StudyFlow AI chatbot connection */
+async function askStudyFlowAI(messages) {
+  const { data, error } = await supabaseClient.functions.invoke(
+    "studyflow-ai",
+    {
+      body: { messages }
+    }
+  );
+
+  if (error) {
+    console.error("StudyFlow AI error:", error);
+    throw new Error("Unable to connect to StudyFlow AI. Please try again.");
+  }
+
+  if (!data || !data.reply) {
+    throw new Error(data?.error || "StudyFlow AI did not return an answer.");
+  }
+
+  return data.reply;
+}
+
 const STORAGE_KEY = "studyflow.assignments.v1";
 const ACTIVITY_KEY = "studyflow.activity.v1";
 const $ = (selector, root = document) => root.querySelector(selector);
