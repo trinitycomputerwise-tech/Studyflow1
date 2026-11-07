@@ -2761,3 +2761,99 @@ async function loadManagedQuizAttemptDetails(attemptId) {
 
   details.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+
+/* ===== StudyFlow AI Chatbot Behaviour ===== */
+(() => {
+  const toggle = document.getElementById("studyflow-ai-toggle");
+  const panel = document.getElementById("studyflow-ai-panel");
+  const close = document.getElementById("studyflow-ai-close");
+  const form = document.getElementById("studyflow-ai-form");
+  const input = document.getElementById("studyflow-ai-input");
+  const send = document.getElementById("studyflow-ai-send");
+  const messagesBox = document.getElementById("studyflow-ai-messages");
+  const supportToggle = document.getElementById("studyflow-support-toggle");
+  const supportForm = document.getElementById("studyflow-support-form");
+
+  if (!toggle || !panel || !form || !input || !messagesBox) return;
+
+  const conversation = [];
+
+  function addMessage(role, content) {
+    const message = document.createElement("div");
+    message.className = `sf-ai-message ${role}`;
+    message.textContent = content;
+    messagesBox.appendChild(message);
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+  }
+
+  toggle.addEventListener("click", () => {
+    panel.hidden = false;
+    input.focus();
+  });
+
+  if (close) {
+    close.addEventListener("click", () => {
+      panel.hidden = true;
+    });
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const question = input.value.trim();
+    if (!question || send?.disabled) return;
+
+    addMessage("user", question);
+    conversation.push({ role: "user", content: question });
+
+    input.value = "";
+    if (send) {
+      send.disabled = true;
+      send.textContent = "Thinking...";
+    }
+
+    const loading = document.createElement("div");
+    loading.className = "sf-ai-message assistant";
+    loading.textContent = "StudyFlow AI is thinking...";
+    messagesBox.appendChild(loading);
+
+    try {
+      const reply = await askStudyFlowAI(conversation.slice(-12));
+
+      loading.remove();
+      addMessage("assistant", reply);
+      conversation.push({ role: "assistant", content: reply });
+
+      if (conversation.length > 12) {
+        conversation.splice(0, conversation.length - 12);
+      }
+    } catch (error) {
+      loading.remove();
+      addMessage(
+        "assistant",
+        error.message || "Sorry, something went wrong. Please try again."
+      );
+    } finally {
+      if (send) {
+        send.disabled = false;
+        send.textContent = "Send";
+      }
+      input.focus();
+    }
+  });
+
+  if (supportToggle && supportForm) {
+    supportToggle.addEventListener("click", () => {
+      supportForm.hidden = !supportForm.hidden;
+    });
+
+    supportForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const status = document.getElementById("studyflow-support-status");
+      if (status) {
+        status.textContent = "Student support submission is being configured. Please try again shortly.";
+      }
+    });
+  }
+})();
