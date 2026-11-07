@@ -688,7 +688,46 @@
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- StudyFlow AI Chatbot -->
+<div id="studyflow-ai-widget">
+  <button id="studyflow-ai-toggle" type="button" aria-label="Open StudyFlow AI">
+    ✨ Ask StudyFlow AI
+  </button>
+
+  <section id="studyflow-ai-panel" hidden>
+    <header class="sf-ai-header">
+      <div>
+        <strong>StudyFlow AI</strong>
+        <small>Your personal study assistant</small>
+      </div>
+      <button id="studyflow-ai-close" type="button" aria-label="Close chat">×</button>
+    </header>
+
+    <div id="studyflow-ai-messages" aria-live="polite">
+      <p class="sf-ai-welcome">Hello! 👋 I'm StudyFlow AI. How can I help you study today?</p>
+    </div>
+
+    <form id="studyflow-ai-form">
+      <textarea id="studyflow-ai-input" placeholder="Ask me anything about studying..." maxlength="4000" required></textarea>
+      <button type="submit" id="studyflow-ai-send">Send</button>
+    </form>
+
+    <button id="studyflow-support-toggle" type="button">Contact Student Support</button>
+
+    <form id="studyflow-support-form" hidden>
+      <input id="studyflow-support-subject" placeholder="Subject" maxlength="120" required>
+      <textarea id="studyflow-support-message" placeholder="Describe your issue..." maxlength="2000" required></textarea>
+      <button type="submit">Submit support request</button>
+      <p id="studyflow-support-status" role="status"></p>
+    </form>
+  </section>
+</div>
+
+</body>
+
 
 </body>
 </html>
