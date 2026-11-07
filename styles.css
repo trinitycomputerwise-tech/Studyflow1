@@ -558,7 +558,7 @@
 #studyflow-ai-widget {
   position: fixed;
   right: 24px;
-  bottom: 24px;
+  bottom: 90px;
   z-index: 9999;
   font-family: inherit;
 }
