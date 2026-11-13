@@ -561,6 +561,15 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
 
             <label for="materialDescription">Description</label>
             <textarea id="materialDescription" placeholder="Brief description"></textarea>
+            <label for="materialPrice">Price (₦)</label>
+            <input
+              id="materialPrice"
+              type="number"
+              min="0"
+              step="100"
+              required
+              placeholder="e.g. 1500"
+            >
 
             <label for="materialFile">Choose a file (PDF or other study document)</label>
             <input id="materialFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
