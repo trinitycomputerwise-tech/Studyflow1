@@ -1911,6 +1911,7 @@ async function uploadStudyMaterial(event) {
       price,
       file_path: filePath,
       file_name: file?.name || null,
+      has_video: Boolean(videoUrl),
       uploader_id: user.id
     })
     .select("id")
@@ -3002,3 +3003,109 @@ async function loadManagedQuizAttemptDetails(attemptId) {
     alert("Unable to verify your payment. Please try again.");
   }
 })();
+
+
+async function watchStudyMaterial(id) {
+  try {
+    const { data: authData } = await supabaseClient.auth.getUser();
+    const user = authData?.user;
+
+    if (!user) {
+      alert("Please sign in first.");
+      return;
+    }
+
+    const { data: material, error } = await supabaseClient
+      .from("study_materials")
+      .select("id, title, price, uploader_id")
+      .eq("id", id)
+      .single();
+
+    if (error || !material) {
+      alert("Study material not found.");
+      return;
+    }
+
+    const { data: roles, error: rolesError } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (rolesError) {
+      alert("Could not check your account permissions.");
+      return;
+    }
+
+    const isAdmin = roles?.some(item => item.role === "admin");
+    const isUploader = material.uploader_id === user.id;
+    const isFree = Number(material.price || 0) <= 0;
+
+    let hasPaid = false;
+
+    if (!isFree && !isAdmin && !isUploader) {
+      const { data: purchases, error: purchaseError } =
+        await supabaseClient
+          .from("material_purchases")
+          .select("id")
+          .eq("material_id", material.id)
+          .eq("user_id", user.id)
+          .eq("status", "success")
+          .limit(1);
+
+      if (purchaseError) {
+        alert("Could not check your purchase. Please try again.");
+        return;
+      }
+
+      hasPaid = purchases?.length > 0;
+    }
+
+    if (!isFree && !isAdmin && !isUploader && !hasPaid) {
+      const { data: paymentData, error: paymentError } =
+        await supabaseClient.functions.invoke("paystack-payment", {
+          body: {
+            action: "initialize",
+            materialId: material.id
+          }
+        });
+
+      if (paymentError || !paymentData?.authorization_url) {
+        alert(
+          paymentData?.error ||
+          paymentError?.message ||
+          "Could not start payment. Please try again."
+        );
+        return;
+      }
+
+      localStorage.setItem("studyflow.pendingPurchaseAction", "watch");
+      window.location.assign(paymentData.authorization_url);
+      return;
+    }
+
+    const { data: video, error: videoError } = await supabaseClient
+      .from("study_material_videos")
+      .select("video_url")
+      .eq("material_id", material.id)
+      .single();
+
+    if (videoError || !video?.video_url) {
+      alert("Video not found or access denied.");
+      return;
+    }
+
+    const videoLink = new URL(video.video_url);
+
+    if (!["https:", "http:"].includes(videoLink.protocol)) {
+      alert("This video link is not valid.");
+      return;
+    }
+
+    window.open(videoLink.href, "_blank", "noopener,noreferrer");
+
+  } catch (error) {
+    console.error("StudyFlow video error:", error);
+    alert("Unable to open the video. Please try again.");
+  }
+}
+
