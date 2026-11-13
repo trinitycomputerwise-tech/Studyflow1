@@ -1498,10 +1498,7 @@ async function loadStudyMaterials() {
   }
 
   const { data: materials, error } = await supabaseClient
-    .from("study_materials")
-    .select("*")
-    .order("created_at", { ascending: false });
-
+    .select("id, title, description, subject, category, file_path, file_name, uploader_id, created_at, price, has_video")
   if (error) {
     list.innerHTML = "<p>Unable to load study materials. Please try again.</p>";
     console.error(error);
@@ -1707,109 +1704,124 @@ async function loadTutorPayouts() {
   });
 }
 
+
 function renderStudyMaterials(materials) {
   const list = document.getElementById("materialsList");
   if (!list) return;
 
   const search = document.getElementById("materialSearch");
-const subjectFilter = document.getElementById("materialSubjectFilter");
-const term = search?.value?.toLowerCase() || "";
-const selectedSubject = subjectFilter?.value || "";
+  const subjectFilter = document.getElementById("materialSubjectFilter");
+  const term = search?.value?.toLowerCase() || "";
+  const selectedSubject = subjectFilter?.value || "";
 
-// Build the subject list automatically
-if (subjectFilter) {
-  const currentSubject = subjectFilter.value;
-  const subjects = [...new Set(
-    materials.map(item => item.subject).filter(Boolean)
-  )].sort();
+  if (subjectFilter) {
+    const currentSubject = subjectFilter.value;
+    const subjects = [...new Set(
+      materials.map(item => item.subject).filter(Boolean)
+    )].sort();
 
-  subjectFilter.innerHTML =
-    '<option value="">All Subjects</option>' +
-    subjects.map(subject =>
-      `<option value="${escapeHtml(subject)}">${escapeHtml(subject)}</option>`
-    ).join("");
+    subjectFilter.innerHTML =
+      '<option value="">All Subjects</option>' +
+      subjects.map(subject =>
+        `<option value="${escapeHtml(subject)}">${escapeHtml(subject)}</option>`
+      ).join("");
 
-  subjectFilter.value = currentSubject;
-}
-const sortOrder = document.getElementById("materialSort")?.value || "newest";
-const filtered = materials.filter(item => {
-  const matchesSearch =
-    (item.title || "").toLowerCase().includes(term) ||
-    (item.subject || "").toLowerCase().includes(term);
+    subjectFilter.value = currentSubject;
+  }
 
-  const matchesSubject =
-    !selectedSubject || item.subject === selectedSubject;
+  const sortOrder =
+    document.getElementById("materialSort")?.value || "newest";
 
-  return matchesSearch && matchesSubject;
-});
+  const filtered = materials.filter(item => {
+    const matchesSearch =
+      (item.title || "").toLowerCase().includes(term) ||
+      (item.subject || "").toLowerCase().includes(term);
+
+    const matchesSubject =
+      !selectedSubject || item.subject === selectedSubject;
+
+    return matchesSearch && matchesSubject;
+  });
+
   filtered.sort((a, b) => {
-  if (sortOrder === "oldest") {
-    return new Date(a.created_at) - new Date(b.created_at);
-  }
+    if (sortOrder === "oldest") {
+      return new Date(a.created_at) - new Date(b.created_at);
+    }
 
-  if (sortOrder === "alphabetical") {
-    return a.title.localeCompare(b.title);
-  }
+    if (sortOrder === "alphabetical") {
+      return a.title.localeCompare(b.title);
+    }
 
-  return new Date(b.created_at) - new Date(a.created_at);
-});
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
 
   if (!filtered.length) {
     list.innerHTML = "<p class='muted'>No study materials found.</p>";
     return;
   }
-  
-  const totalPages = Math.max(1, Math.ceil(filtered.length / materialsPerPage));
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / materialsPerPage)
+  );
 
   if (currentMaterialsPage > totalPages) {
     currentMaterialsPage = totalPages;
   }
 
-const startIndex = (currentMaterialsPage - 1) * materialsPerPage;
-const paginatedMaterials = filtered.slice(
-  startIndex,
-  startIndex + materialsPerPage
-);
+  const startIndex = (currentMaterialsPage - 1) * materialsPerPage;
 
-document.getElementById("materialsPageInfo").textContent =
-  `Page ${currentMaterialsPage} of ${totalPages}`;
+  const paginatedMaterials = filtered.slice(
+    startIndex,
+    startIndex + materialsPerPage
+  );
 
-document.getElementById("materialsPrevious").disabled =
-  currentMaterialsPage === 1;
+  document.getElementById("materialsPageInfo").textContent =
+    `Page ${currentMaterialsPage} of ${totalPages}`;
 
-document.getElementById("materialsNext").disabled =
-  currentMaterialsPage === totalPages;
+  document.getElementById("materialsPrevious").disabled =
+    currentMaterialsPage === 1;
 
-list.innerHTML = paginatedMaterials.map(item => {
-  const fileName = item.file_name || "";
-  const extension = fileName.split(".").pop().toLowerCase();
+  document.getElementById("materialsNext").disabled =
+    currentMaterialsPage === totalPages;
 
-  let fileIcon = "📄";
+  list.innerHTML = paginatedMaterials.map(item => {
+    const fileName = item.file_name || "";
+    const extension = fileName.split(".").pop().toLowerCase();
 
-  if (extension === "pdf") fileIcon = "📕";
-  else if (["doc", "docx"].includes(extension)) fileIcon = "📝";
-  else if (["ppt", "pptx"].includes(extension)) fileIcon = "📊";
-  else if (["xls", "xlsx"].includes(extension)) fileIcon = "📈";
-  else if (item.video_url) fileIcon = "🎥";
+    let fileIcon = "📄";
 
-  const uploadDate = item.created_at
-    ? new Date(item.created_at).toLocaleDateString()
-    : "Date unavailable";
+    if (extension === "pdf") fileIcon = "📕";
+    else if (["doc", "docx"].includes(extension)) fileIcon = "📝";
+    else if (["ppt", "pptx"].includes(extension)) fileIcon = "📊";
+    else if (["xls", "xlsx"].includes(extension)) fileIcon = "📈";
+    else if (item.has_video) fileIcon = "🎥";
 
-  return `
-    <div class="panel" style="margin-top:15px;">
-      <h3>${fileIcon} ${escapeHtml(item.title)}</h3>
-      <p><strong>Subject:</strong> ${escapeHtml(item.subject)}</p>
-      <p><strong>Category:</strong> ${escapeHtml(item.category || "Notes")}</p>
-      <p><strong>Price:</strong> ₦${Number(item.price || 0).toLocaleString("en-NG")}</p>
-      <p><strong>Uploaded:</strong> ${uploadDate}</p>
-      <p>${escapeHtml(item.description || "")}</p>
-      ${item.file_path ? `<button class="secondary-btn" onclick="downloadStudyMaterial('${item.id}')">Download Material</button>` : ""}
-      ${item.video_url ? `<p><a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener noreferrer">🎥 Watch Video</a></p>` : ""}
-      <div id="materialActions-${item.id}"></div>
-    </div>
-  `;
-}).join("");
+    const uploadDate = item.created_at
+      ? new Date(item.created_at).toLocaleDateString()
+      : "Date unavailable";
+
+    return `
+      <div class="panel" style="margin-top:15px;">
+        <h3>${fileIcon} ${escapeHtml(item.title)}</h3>
+        <p><strong>Subject:</strong> ${escapeHtml(item.subject)}</p>
+        <p><strong>Category:</strong> ${escapeHtml(item.category || "Notes")}</p>
+        <p><strong>Price:</strong> ₦${Number(item.price || 0).toLocaleString("en-NG")}</p>
+        <p><strong>Uploaded:</strong> ${uploadDate}</p>
+        <p>${escapeHtml(item.description || "")}</p>
+
+        ${item.file_path
+          ? `<button class="secondary-btn" onclick="downloadStudyMaterial('${item.id}')">Download Material</button>`
+          : ""}
+
+        ${item.has_video
+          ? `<p><button class="secondary-btn" onclick="watchStudyMaterial('${item.id}')">🎥 Watch Video</button></p>`
+          : ""}
+
+        <div id="materialActions-${item.id}"></div>
+      </div>
+    `;
+  }).join("");
 
   addStudyMaterialActions(filtered);
 }
@@ -1840,6 +1852,7 @@ async function addStudyMaterialActions(materials) {
   });
 }
 
+
 async function uploadStudyMaterial(event) {
   event.preventDefault();
 
@@ -1865,6 +1878,11 @@ async function uploadStudyMaterial(event) {
     return;
   }
 
+  if (!Number.isFinite(price) || price < 0) {
+    message.textContent = "Please enter a valid price.";
+    return;
+  }
+
   message.textContent = "Uploading...";
 
   let filePath = null;
@@ -1882,7 +1900,8 @@ async function uploadStudyMaterial(event) {
     }
   }
 
-  const { error } = await supabaseClient
+  // Save material details without exposing the video URL.
+  const { data: material, error: materialError } = await supabaseClient
     .from("study_materials")
     .insert({
       title,
@@ -1892,46 +1911,149 @@ async function uploadStudyMaterial(event) {
       price,
       file_path: filePath,
       file_name: file?.name || null,
-      video_url: videoUrl || null,
       uploader_id: user.id
-    });
+    })
+    .select("id")
+    .single();
 
-  if (error) {
+  if (materialError || !material) {
     if (filePath) {
-      await supabaseClient.storage.from("study-materials").remove([filePath]);
+      await supabaseClient.storage
+        .from("study-materials")
+        .remove([filePath]);
     }
-    message.textContent = "Could not save material: " + error.message;
+
+    message.textContent =
+      "Could not save material: " +
+      (materialError?.message || "Unknown error");
     return;
+  }
+
+  // Save the video URL in the protected table.
+  if (videoUrl) {
+    const { error: videoError } = await supabaseClient
+      .from("study_material_videos")
+      .insert({
+        material_id: material.id,
+        video_url: videoUrl
+      });
+
+    if (videoError) {
+      await supabaseClient
+        .from("study_materials")
+        .delete()
+        .eq("id", material.id);
+
+      if (filePath) {
+        await supabaseClient.storage
+          .from("study-materials")
+          .remove([filePath]);
+      }
+
+      message.textContent =
+        "Could not save video link: " + videoError.message;
+      return;
+    }
   }
 
   document.getElementById("materialUploadForm").reset();
   message.textContent = "Study material uploaded successfully!";
-  loadStudyMaterials();
+
+  await loadStudyMaterials();
 }
 
 async function downloadStudyMaterial(id) {
-  const { data: material, error } = await supabaseClient
-    .from("study_materials")
-    .select("file_path, file_name")
-    .eq("id", id)
-    .single();
+  try {
+    const { data: authData } = await supabaseClient.auth.getUser();
+    const user = authData?.user;
 
-  if (error || !material?.file_path) {
-    alert("Material file not found.");
-    return;
+    if (!user) {
+      alert("Please sign in first.");
+      return;
+    }
+
+    const { data: material, error } = await supabaseClient
+      .from("study_materials")
+      .select("id, title, price, file_path, file_name, uploader_id")
+      .eq("id", id)
+      .single();
+
+    if (error || !material?.file_path) {
+      alert("Material file not found.");
+      return;
+    }
+
+    const { data: roles } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    const isAdmin = roles?.some(item => item.role === "admin");
+    const isTutor = roles?.some(item => item.role === "tutor");
+    const isUploader = material.uploader_id === user.id;
+
+    const isFree = Number(material.price || 0) <= 0;
+
+    let hasPaid = false;
+
+    if (!isFree && !isAdmin && !isUploader) {
+      const { data: purchases, error: purchaseError } =
+        await supabaseClient
+          .from("material_purchases")
+          .select("id")
+          .eq("material_id", material.id)
+          .eq("user_id", user.id)
+          .eq("status", "success")
+          .limit(1);
+
+      if (purchaseError) {
+        alert("Could not check your purchase. Please try again.");
+        return;
+      }
+
+      hasPaid = purchases?.length > 0;
+    }
+
+    if (!isFree && !isAdmin && !isUploader && !hasPaid) {
+      const { data: paymentData, error: paymentError } =
+        await supabaseClient.functions.invoke("paystack-payment", {
+          body: {
+            action: "initialize",
+            materialId: material.id
+          }
+        });
+
+      if (paymentError || !paymentData?.authorization_url) {
+        alert(
+          paymentData?.error ||
+          paymentError?.message ||
+          "Could not start payment. Please try again."
+        );
+        return;
+      }
+
+     localStorage.setItem("studyflow.pendingPurchaseAction", "download");
+     window.location.assign(paymentData.authorization_url);
+      return;
+    }
+
+    const { data, error: downloadError } = await supabaseClient.storage
+      .from("study-materials")
+      .createSignedUrl(material.file_path, 60);
+
+    if (downloadError) {
+      alert("Download failed: " + downloadError.message);
+      return;
+    }
+
+    window.open(data.signedUrl, "_blank");
+
+  } catch (error) {
+    console.error("Study material download error:", error);
+    alert("Something went wrong. Please try again.");
   }
-
-  const { data, error: downloadError } = await supabaseClient.storage
-    .from("study-materials")
-    .createSignedUrl(material.file_path, 60);
-
-  if (downloadError) {
-    alert("Download failed: " + downloadError.message);
-    return;
-  }
-
-  window.open(data.signedUrl, "_blank");
 }
+
 
 async function deleteStudyMaterial(id, filePath) {
   if (!confirm("Are you sure you want to delete this material?")) return;
@@ -1957,10 +2079,11 @@ async function deleteStudyMaterial(id, filePath) {
   alert("Material deleted.");
   loadStudyMaterials();
 }
+
 async function editStudyMaterial(id) {
   const { data: material, error: fetchError } = await supabaseClient
     .from("study_materials")
-    .select("*")
+    .select("id, title, subject, category, description")
     .eq("id", id)
     .single();
 
@@ -2005,51 +2128,8 @@ async function editStudyMaterial(id) {
   }
 
   alert("Material updated successfully!");
-  loadStudyMaterials();
+  await loadStudyMaterials();
 }
-
-// Connect form and search controls
-document.getElementById("materialUploadForm")?.addEventListener(
-  "submit",
-  uploadStudyMaterial
-);
-
-document.getElementById("materialSearch")?.addEventListener(
-  "input",
-  () => {
-    currentMaterialsPage = 1;
-    loadStudyMaterials();
-  }
-);
-document.getElementById("materialSubjectFilter")?.addEventListener(
-  "change",
-  () => {
-    currentMaterialsPage = 1;
-    loadStudyMaterials();
-  }
-);
-document.getElementById("materialSort")?.addEventListener(
-  "change",
-  loadStudyMaterials
-);
-
-document.getElementById("materialsPrevious")?.addEventListener(
-  "click",
-  () => {
-    if (currentMaterialsPage > 1) {
-      currentMaterialsPage--;
-      loadStudyMaterials();
-    }
-  }
-);
-
-document.getElementById("materialsNext")?.addEventListener(
-  "click",
-  () => {
-    currentMaterialsPage++;
-    loadStudyMaterials();
-  }
-);
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -2858,5 +2938,67 @@ async function loadManagedQuizAttemptDetails(attemptId) {
         status.textContent = "Student support submission is being configured. Please try again shortly.";
       }
     });
+  }
+})();
+
+
+// ===== STUDYFLOW PAYSTACK PAYMENT RETURN =====
+(async function handlePaystackReturn() {
+  const params = new URLSearchParams(window.location.search);
+
+  const reference =
+    params.get("reference") || params.get("trxref");
+
+  if (!reference) return;
+
+  try {
+    const { data: sessionData } =
+      await supabaseClient.auth.getSession();
+
+    if (!sessionData?.session) {
+      alert("Please sign in to the same StudyFlow account used for payment, then reload this page.");
+      return;
+    }
+
+    const { data, error } =
+      await supabaseClient.functions.invoke("paystack-payment", {
+        body: {
+          action: "verify",
+          reference: reference
+        }
+      });
+
+    if (error || !data?.success || !data?.material_id) {
+      alert(
+        data?.error ||
+        data?.message ||
+        error?.message ||
+        "Payment verification failed. Please contact StudyFlow support."
+      );
+      return;
+    }
+
+    const purchaseAction =
+      localStorage.getItem("studyflow.pendingPurchaseAction");
+
+    localStorage.removeItem("studyflow.pendingPurchaseAction");
+
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname + window.location.hash
+    );
+
+    alert("Payment successful! Your material is ready.");
+
+    if (purchaseAction === "watch") {
+      await watchStudyMaterial(data.material_id);
+    } else {
+      await downloadStudyMaterial(data.material_id);
+    }
+
+  } catch (error) {
+    console.error("Paystack return error:", error);
+    alert("Unable to verify your payment. Please try again.");
   }
 })();
