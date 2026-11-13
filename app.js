@@ -1801,6 +1801,7 @@ list.innerHTML = paginatedMaterials.map(item => {
       <h3>${fileIcon} ${escapeHtml(item.title)}</h3>
       <p><strong>Subject:</strong> ${escapeHtml(item.subject)}</p>
       <p><strong>Category:</strong> ${escapeHtml(item.category || "Notes")}</p>
+      <p><strong>Price:</strong> ₦${Number(item.price || 0).toLocaleString("en-NG")}</p>
       <p><strong>Uploaded:</strong> ${uploadDate}</p>
       <p>${escapeHtml(item.description || "")}</p>
       ${item.file_path ? `<button class="secondary-btn" onclick="downloadStudyMaterial('${item.id}')">Download Material</button>` : ""}
