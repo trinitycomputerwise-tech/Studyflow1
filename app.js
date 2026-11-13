@@ -1847,6 +1847,7 @@ async function uploadStudyMaterial(event) {
   const subject = document.getElementById("materialSubject").value.trim();
   const category = document.getElementById("materialCategory").value;
   const description = document.getElementById("materialDescription").value.trim();
+  const price = Number(document.getElementById("materialPrice").value);
   const file = document.getElementById("materialFile").files[0];
   const videoUrl = document.getElementById("materialVideoUrl").value.trim();
 
@@ -1887,6 +1888,7 @@ async function uploadStudyMaterial(event) {
       subject,
       category,
       description,
+      price,
       file_path: filePath,
       file_name: file?.name || null,
       video_url: videoUrl || null,
