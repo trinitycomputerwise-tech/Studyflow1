@@ -1965,6 +1965,7 @@ async function uploadStudyMaterial(event) {
   await loadStudyMaterials();
 }
 
+
 async function downloadStudyMaterial(id) {
   try {
     const { data: authData } = await supabaseClient.auth.getUser();
@@ -1992,12 +1993,11 @@ async function downloadStudyMaterial(id) {
       .eq("user_id", user.id);
 
     const isAdmin = roles?.some(item => item.role === "admin");
-    const isTutor = roles?.some(item => item.role === "tutor");
     const isUploader = material.uploader_id === user.id;
-
     const isFree = Number(material.price || 0) <= 0;
 
     let hasPaid = false;
+    let hasPremium = false;
 
     if (!isFree && !isAdmin && !isUploader) {
       const { data: purchases, error: purchaseError } =
@@ -2015,9 +2015,31 @@ async function downloadStudyMaterial(id) {
       }
 
       hasPaid = purchases?.length > 0;
+
+      const { data: memberships, error: membershipError } =
+        await supabaseClient
+          .from("premium_memberships")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .gt("expires_at", new Date().toISOString())
+          .limit(1);
+
+      if (membershipError) {
+        alert("Could not check your Premium membership. Please try again.");
+        return;
+      }
+
+      hasPremium = memberships?.length > 0;
     }
 
-    if (!isFree && !isAdmin && !isUploader && !hasPaid) {
+    if (
+      !isFree &&
+      !isAdmin &&
+      !isUploader &&
+      !hasPaid &&
+      !hasPremium
+    ) {
       const { data: paymentData, error: paymentError } =
         await supabaseClient.functions.invoke("Paystack-Payment", {
           body: {
@@ -2035,8 +2057,12 @@ async function downloadStudyMaterial(id) {
         return;
       }
 
-     localStorage.setItem("studyflow.pendingPurchaseAction", "download");
-     window.location.assign(paymentData.authorization_url);
+      localStorage.setItem(
+        "studyflow.pendingPurchaseAction",
+        "download"
+      );
+
+      window.location.assign(paymentData.authorization_url);
       return;
     }
 
@@ -2056,7 +2082,6 @@ async function downloadStudyMaterial(id) {
     alert("Something went wrong. Please try again.");
   }
 }
-
 
 async function deleteStudyMaterial(id, filePath) {
   if (!confirm("Are you sure you want to delete this material?")) return;
@@ -3043,6 +3068,7 @@ async function loadManagedQuizAttemptDetails(attemptId) {
   }
 })();
 
+
 async function watchStudyMaterial(id) {
   try {
     const { data: authData } = await supabaseClient.auth.getUser();
@@ -3079,6 +3105,7 @@ async function watchStudyMaterial(id) {
     const isFree = Number(material.price || 0) <= 0;
 
     let hasPaid = false;
+    let hasPremium = false;
 
     if (!isFree && !isAdmin && !isUploader) {
       const { data: purchases, error: purchaseError } =
@@ -3096,9 +3123,31 @@ async function watchStudyMaterial(id) {
       }
 
       hasPaid = purchases?.length > 0;
+
+      const { data: memberships, error: membershipError } =
+        await supabaseClient
+          .from("premium_memberships")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .gt("expires_at", new Date().toISOString())
+          .limit(1);
+
+      if (membershipError) {
+        alert("Could not check your Premium membership. Please try again.");
+        return;
+      }
+
+      hasPremium = memberships?.length > 0;
     }
 
-    if (!isFree && !isAdmin && !isUploader && !hasPaid) {
+    if (
+      !isFree &&
+      !isAdmin &&
+      !isUploader &&
+      !hasPaid &&
+      !hasPremium
+    ) {
       const { data: paymentData, error: paymentError } =
         await supabaseClient.functions.invoke("Paystack-Payment", {
           body: {
@@ -3116,7 +3165,11 @@ async function watchStudyMaterial(id) {
         return;
       }
 
-      localStorage.setItem("studyflow.pendingPurchaseAction", "watch");
+      localStorage.setItem(
+        "studyflow.pendingPurchaseAction",
+        "watch"
+      );
+
       window.location.assign(paymentData.authorization_url);
       return;
     }
@@ -3146,9 +3199,115 @@ async function watchStudyMaterial(id) {
     alert("Unable to open the video. Please try again.");
   }
 }
+
 // Connect the Study Materials upload form
 const materialUploadForm = document.getElementById("materialUploadForm");
 
 if (materialUploadForm) {
   materialUploadForm.addEventListener("submit", uploadStudyMaterial);
 }
+
+// ===== STUDYFLOW PREMIUM MEMBERSHIP =====
+
+async function subscribeToPremium(plan) {
+  const message = document.getElementById(
+    "premiumMembershipMessage"
+  );
+
+  try {
+    const { data: authData } =
+      await supabaseClient.auth.getUser();
+
+    const user = authData?.user;
+
+    if (!user) {
+      alert("Please sign in before subscribing to StudyFlow Premium.");
+      return;
+    }
+
+    if (!["monthly", "annual"].includes(plan)) {
+      alert("Invalid Premium plan.");
+      return;
+    }
+
+    if (message) {
+      message.textContent = "Connecting to Paystack...";
+    }
+
+    const { data, error } =
+      await supabaseClient.functions.invoke("Paystack-Payment", {
+        body: {
+          action: "initialize_premium",
+          plan: plan
+        }
+      });
+
+    if (error || !data?.success || !data?.authorization_url) {
+      throw new Error(
+        data?.error ||
+        error?.message ||
+        "Could not start Premium payment."
+      );
+    }
+
+    window.location.assign(data.authorization_url);
+
+  } catch (error) {
+    console.error("StudyFlow Premium payment error:", error);
+
+    if (message) {
+      message.textContent =
+        error.message || "Unable to start Premium payment.";
+    } else {
+      alert(error.message || "Unable to start Premium payment.");
+    }
+  }
+}
+
+// Display the signed-in user's Premium membership status.
+async function loadPremiumMembershipStatus() {
+  const statusBox = document.getElementById(
+    "premiumMembershipStatus"
+  );
+
+  if (!statusBox) return;
+
+  try {
+    const { data: authData } =
+      await supabaseClient.auth.getUser();
+
+    if (!authData?.user) {
+      statusBox.textContent = "Sign in to check your Premium membership.";
+      return;
+    }
+
+    const { data: memberships, error } = await supabaseClient
+      .from("premium_memberships")
+      .select("plan, status, expires_at")
+      .eq("user_id", authData.user.id)
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .order("expires_at", { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    if (memberships?.length) {
+      const membership = memberships[0];
+
+      statusBox.textContent =
+        `⭐ Your ${membership.plan} Premium membership is active until ` +
+        new Date(membership.expires_at).toLocaleDateString();
+    } else {
+      statusBox.textContent =
+        "You do not currently have an active Premium membership.";
+    }
+
+  } catch (error) {
+    console.error("Premium membership status error:", error);
+    statusBox.textContent =
+      "Unable to load your Premium membership status.";
+  }
+}
+
+loadPremiumMembershipStatus();
