@@ -2019,7 +2019,7 @@ async function downloadStudyMaterial(id) {
 
     if (!isFree && !isAdmin && !isUploader && !hasPaid) {
       const { data: paymentData, error: paymentError } =
-        await supabaseClient.functions.invoke("paystack-payment", {
+        await supabaseClient.functions.invoke("Paystack-Payment", {
           body: {
             action: "initialize",
             materialId: material.id
@@ -2964,7 +2964,7 @@ async function loadManagedQuizAttemptDetails(attemptId) {
     }
 
     const { data, error } =
-      await supabaseClient.functions.invoke("paystack-payment", {
+      await supabaseClient.functions.invoke("Paystack-Payment", {
         body: {
           action: "verify",
           reference: reference
@@ -3064,7 +3064,7 @@ async function watchStudyMaterial(id) {
 
     if (!isFree && !isAdmin && !isUploader && !hasPaid) {
       const { data: paymentData, error: paymentError } =
-        await supabaseClient.functions.invoke("paystack-payment", {
+        await supabaseClient.functions.invoke("Paystack-Payment", {
           body: {
             action: "initialize",
             materialId: material.id
