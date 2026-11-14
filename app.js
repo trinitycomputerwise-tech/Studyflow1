@@ -1498,7 +1498,9 @@ async function loadStudyMaterials() {
   }
 
   const { data: materials, error } = await supabaseClient
-    .select("id, title, description, subject, category, file_path, file_name, uploader_id, created_at, price, has_video")
+   .from("study_materials")
+   .select("id, title, description, subject, category, file_path, file_name, uploader_id, created_at, price, has_video")
+   .order("created_at", { ascending: false });
   if (error) {
     list.innerHTML = "<p>Unable to load study materials. Please try again.</p>";
     console.error(error);
