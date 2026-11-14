@@ -86,6 +86,50 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
       Create Your Free StudyFlow Account
     </button>
   </main>
+    
+<!-- STUDYFLOW PREMIUM MEMBERSHIP -->
+<section id="premium-membership" class="panel">
+  <h2>⭐ StudyFlow Premium</h2>
+
+  <p>
+    Upgrade your learning experience with unlimited access
+    to paid study materials, educational videos and exclusive
+    Premium learning resources.
+  </p>
+
+  <div class="premium-plans">
+
+    <div class="panel">
+      <h3>Monthly Premium</h3>
+      <h2>₦2,000</h2>
+      <p>30 days of Premium access.</p>
+      <button
+        type="button"
+        class="primary-btn"
+        onclick="subscribeToPremium('monthly')">
+        Get Monthly Premium
+      </button>
+    </div>
+
+    <div class="panel">
+      <h3>Annual Premium</h3>
+      <h2>₦15,000</h2>
+      <p>365 days of Premium access.</p>
+      <button
+        type="button"
+        class="primary-btn"
+        onclick="subscribeToPremium('annual')">
+        Get Annual Premium
+      </button>
+    </div>
+
+  </div>
+
+  <p id="premiumMembershipMessage"></p>
+  <div id="premiumMembershipStatus"></div>
+</section>
+<!-- END STUDYFLOW PREMIUM MEMBERSHIP -->
+
     <section class="public-tutoring">
   <h2>StudyFlow Tutoring Services</h2>
   <p>
@@ -699,19 +743,19 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
 
       <footer class="footer"><span>© <span id="year"></span> StudyFlow</span><span>Made for focused learning <b>•</b> Plan. Study. Achieve.</span></footer>
     </main>
-  </div>
+    </div>
 
-  <dialog id="assignmentDialog" class="assignment-dialog">
-    <form id="assignmentForm">
-      <div class="dialog-heading"><div><p class="eyebrow">MAKE YOUR NEXT MOVE</p><h2 id="dialogTitle">Add assignment</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close dialog">×</button></div>
-      <input type="hidden" id="assignmentId">
-      <label>Assignment title <input id="titleInput" required maxlength="100" placeholder="e.g. Research essay"></label>
-      <div class="form-row"><label>Subject <input id="subjectInput" required maxlength="50" placeholder="e.g. Computer Science" list="subjectOptions"></label><datalist id="subjectOptions"><option value="Mathematics"><option value="Computer Science"><option value="English"><option value="Physics"><option value="Biology"><option value="History"></datalist><label>Due date <input id="dueInput" type="date" required></label></div>
-      <div class="form-row"><label>Priority <select id="priorityInput"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select></label><label>Status <select id="statusInput"><option value="Pending">Pending</option><option value="Completed">Completed</option></select></label></div>
-      <label>Notes <textarea id="notesInput" rows="3" maxlength="500" placeholder="Add a note or the next step (optional)"></textarea></label>
-      <div class="dialog-actions"><button type="button" class="secondary-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button">Save assignment</button></div>
-    </form>
-  </dialog>
+    <dialog id="assignmentDialog" class="assignment-dialog">
+      <form id="assignmentForm">
+        <div class="dialog-heading"><div><p class="eyebrow">MAKE YOUR NEXT MOVE</p><h2 id="dialogTitle">Add assignment</h2></div><button type="button" class="icon-button" id="closeDialog" aria-label="Close dialog">×</button></div>
+        <input type="hidden" id="assignmentId">
+        <label>Assignment title <input id="titleInput" required maxlength="100" placeholder="e.g. Research essay"></label>
+        <div class="form-row"><label>Subject <input id="subjectInput" required maxlength="50" placeholder="e.g. Computer Science" list="subjectOptions"></label><datalist id="subjectOptions"><option value="Mathematics"><option value="Computer Science"><option value="English"><option value="Physics"><option value="Biology"><option value="History"></datalist><label>Due date <input id="dueInput" type="date" required></label></div>
+        <div class="form-row"><label>Priority <select id="priorityInput"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select></label><label>Status <select id="statusInput"><option value="Pending">Pending</option><option value="Completed">Completed</option></select></label></div>
+        <label>Notes <textarea id="notesInput" rows="3" maxlength="500" placeholder="Add a note or the next step (optional)"></textarea></label>
+        <div class="dialog-actions"><button type="button" class="secondary-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button">Save assignment</button></div>
+      </form>
+    </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   
 
