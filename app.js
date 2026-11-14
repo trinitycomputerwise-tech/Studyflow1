@@ -2945,31 +2945,68 @@ async function loadManagedQuizAttemptDetails(attemptId) {
 })();
 
 
+
 // ===== STUDYFLOW PAYSTACK PAYMENT RETURN =====
 (async function handlePaystackReturn() {
   const params = new URLSearchParams(window.location.search);
-
-  const reference =
-    params.get("reference") || params.get("trxref");
+  const reference = params.get("reference") || params.get("trxref");
 
   if (!reference) return;
 
   try {
-    const { data: sessionData } =
-      await supabaseClient.auth.getSession();
+    const { data: sessionData } = await supabaseClient.auth.getSession();
 
     if (!sessionData?.session) {
       alert("Please sign in to the same StudyFlow account used for payment, then reload this page.");
       return;
     }
 
-    const { data, error } =
-      await supabaseClient.functions.invoke("Paystack-Payment", {
+    // Check whether this is a Premium membership payment.
+    if (reference.startsWith("studyflow_premium_")) {
+      const { data, error } = await supabaseClient.functions.invoke(
+        "Paystack-Payment",
+        {
+          body: {
+            action: "verify_premium",
+            reference: reference
+          }
+        }
+      );
+
+      if (error || !data?.success) {
+        alert(
+          data?.error ||
+          data?.message ||
+          error?.message ||
+          "Premium payment verification failed. Please contact StudyFlow support."
+        );
+        return;
+      }
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname + window.location.hash
+      );
+
+      alert(
+        "Congratulations! Your StudyFlow Premium membership is active."
+      );
+
+      window.location.reload();
+      return;
+    }
+
+    // Existing study material and video payment verification.
+    const { data, error } = await supabaseClient.functions.invoke(
+      "Paystack-Payment",
+      {
         body: {
           action: "verify",
           reference: reference
         }
-      });
+      }
+    );
 
     if (error || !data?.success || !data?.material_id) {
       alert(
@@ -2981,8 +3018,9 @@ async function loadManagedQuizAttemptDetails(attemptId) {
       return;
     }
 
-    const purchaseAction =
-      localStorage.getItem("studyflow.pendingPurchaseAction");
+    const purchaseAction = localStorage.getItem(
+      "studyflow.pendingPurchaseAction"
+    );
 
     localStorage.removeItem("studyflow.pendingPurchaseAction");
 
@@ -2999,13 +3037,11 @@ async function loadManagedQuizAttemptDetails(attemptId) {
     } else {
       await downloadStudyMaterial(data.material_id);
     }
-
   } catch (error) {
     console.error("Paystack return error:", error);
     alert("Unable to verify your payment. Please try again.");
   }
 })();
-
 
 async function watchStudyMaterial(id) {
   try {
