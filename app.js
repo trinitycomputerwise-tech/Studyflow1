@@ -1451,6 +1451,7 @@ if (session?.user) {
   setTimeout(async () => {
     await loadAssignmentsFromSupabase();
     await loadTutoringData();
+    await loadPremiumMembershipStatus();
   }, 0);
 } else {
   assignments = [];
