@@ -3310,4 +3310,6 @@ async function loadPremiumMembershipStatus() {
   }
 }
 
-loadPremiumMembershipStatus();
+document.addEventListener("DOMContentLoaded", () => {
+  loadPremiumMembershipStatus();
+});
