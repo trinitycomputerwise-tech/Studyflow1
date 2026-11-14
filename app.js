@@ -3110,4 +3110,9 @@ async function watchStudyMaterial(id) {
     alert("Unable to open the video. Please try again.");
   }
 }
+// Connect the Study Materials upload form
+const materialUploadForm = document.getElementById("materialUploadForm");
 
+if (materialUploadForm) {
+  materialUploadForm.addEventListener("submit", uploadStudyMaterial);
+}
