@@ -731,3 +731,168 @@
     bottom: 12px;
   }
 }
+
+.sf-share {
+        max-width: 650px;
+        margin: 30px auto;
+        padding: 28px 20px;
+        text-align: center;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        font-family: Arial, sans-serif;
+      }
+
+      .sf-share h3 {
+        margin: 0 0 10px;
+        color: #172554;
+        font-size: 23px;
+      }
+
+      .sf-share p {
+        color: #64748b;
+        margin-bottom: 22px;
+      }
+
+      .sf-share-buttons {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .sf-share-buttons a,
+      .sf-share-buttons button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 12px 19px;
+        border: none;
+        border-radius: 30px;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform .2s, opacity .2s;
+      }
+
+      .sf-share-buttons a:hover,
+      .sf-share-buttons button:hover {
+        transform: translateY(-3px);
+        opacity: .88;
+      }
+
+      .sf-whatsapp { background: #25D366; }
+      .sf-facebook { background: #1877F2; }
+      .sf-x { background: #171717; }
+      .sf-copy { background: #475569; }
+
+      .sf-icon {
+        font-size: 19px;
+        font-weight: bold;
+      }
+
+      @media (max-width: 480px) {
+        .sf-share-buttons a,
+        .sf-share-buttons button {
+          flex: 1 1 130px;
+        }
+      }
+
+/* STUDYFLOW PROFESSIONAL FOOTER */
+.studyflow-footer {
+  margin-top: 50px;
+  padding: 40px 24px 20px;
+  background: #10213f;
+  color: #ffffff;
+  border-radius: 16px 16px 0 0;
+}
+
+.studyflow-footer .footer-main {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.3fr;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto 35px;
+}
+
+.studyflow-footer .footer-brand h2 {
+  font-size: 25px;
+  margin: 0 0 12px;
+  color: #ffffff;
+}
+
+.studyflow-footer .footer-brand p {
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.studyflow-footer .footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.studyflow-footer .footer-column h3 {
+  color: #ffffff;
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+
+.studyflow-footer .footer-column a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.studyflow-footer .footer-column a:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+.studyflow-footer .footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.studyflow-footer .footer-bottom p {
+  margin: 0;
+}
+
+@media (max-width: 800px) {
+  .studyflow-footer .footer-main {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .studyflow-footer {
+    padding: 30px 18px 20px;
+  }
+
+  .studyflow-footer .footer-main {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .studyflow-footer .footer-bottom {
+    flex-direction: column;
+  }
+}
+
+
+
+
+      
