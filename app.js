@@ -1238,6 +1238,18 @@ document.getElementById("public-explore-tutors-button")
     document.getElementById("login-button").hidden = false;
     document.getElementById("signup-button").hidden = false;
   });
+document.getElementById("footer-find-tutor")
+  ?.addEventListener("click", async (event) => {
+    event.preventDefault();
+
+    const { data: authData } = await supabaseClient.auth.getUser();
+
+    if (authData?.user) {
+      setView("tutoring");
+    } else {
+      document.getElementById("public-explore-tutors-button")?.click();
+    }
+  });
 function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
