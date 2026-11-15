@@ -1209,6 +1209,14 @@ function showAuthMessage(message) {
 }
 // StudyFlow public homepage buttons
 const publicHomepage = document.getElementById("public-homepage");
+document.getElementById("footer-features")
+  ?.addEventListener("click", (event) => {
+    event.preventDefault();
+    publicHomepage.hidden = false;
+    document.getElementById("auth-section").hidden = true;
+    document.getElementById("dashboard-content").hidden = true;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
 document.getElementById("public-login-button")?.addEventListener("click", () => {
   publicHomepage.hidden = true;
