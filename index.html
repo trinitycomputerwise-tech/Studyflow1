@@ -424,10 +424,39 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
     </article>
   </div>
 
-  <p class="muted small" id="adminFinancialMessage">
-    Financial figures will appear here.
+ 
+<p class="muted small" id="adminFinancialMessage">
+  Financial figures will appear here.
+</p>
+
+<!-- ADMIN PAYSTACK MODE SETTINGS -->
+<div class="panel" id="adminPaymentModePanel">
+  <h3>Paystack Payment Mode</h3>
+  <p class="muted">
+    Choose whether StudyFlow processes real or test payments.
   </p>
+
+  <p>
+    Current mode:
+    <strong id="adminPaymentModeStatus">Loading...</strong>
+  </p>
+
+  <button
+    type="button"
+    class="primary-btn"
+    id="adminPaymentModeToggle"
+  >
+    Switch to Test Mode
+  </button>
+
+  <p class="muted small" id="adminPaymentModeMessage">
+    Payment settings are loading.
+  </p>
+</div>
+<!-- END ADMIN PAYSTACK MODE SETTINGS -->
+
 </section>
+
 
         <div class="content-grid">
           <div class="main-column">
