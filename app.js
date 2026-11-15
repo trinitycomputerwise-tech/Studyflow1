@@ -813,6 +813,7 @@ async function loadAdminFinancialOverview() {
   if (!isAdmin) return;
 
   panel.hidden = false;
+  await loadAdminPaymentMode();
 
   const message = document.getElementById("adminFinancialMessage");
   message.textContent = "Loading financial figures...";
@@ -2517,7 +2518,6 @@ async function takeQuiz(quizId) {
   const content = document.getElementById("takeQuizContent");
 
   panel.hidden = false;
-  await loadAdminPaymentMode();
   content.innerHTML = "<p>Loading quiz questions...</p>";
   panel.scrollIntoView({ behavior: "smooth" });
 
