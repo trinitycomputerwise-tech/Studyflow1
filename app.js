@@ -869,6 +869,86 @@ async function loadAdminFinancialOverview() {
     "Estimates based on successful Live Mode payments: 15% StudyFlow commission and 85% tutor share. Processing fees are not deducted. Final payouts are prepared only after session confirmation.";
 }
 
+
+async function loadAdminPaymentMode() {
+  const panel = document.getElementById("adminPaymentModePanel");
+  const status = document.getElementById("adminPaymentModeStatus");
+  const button = document.getElementById("adminPaymentModeToggle");
+  const message = document.getElementById("adminPaymentModeMessage");
+
+  if (!panel || !status || !button || !message) return;
+
+  message.textContent = "Loading payment settings...";
+  button.disabled = true;
+
+  const { data, error } = await supabaseClient.functions.invoke(
+    "Paystack-Payment",
+    {
+      body: { action: "get_payment_mode" }
+    }
+  );
+
+  if (error || !data?.success) {
+    message.textContent =
+      data?.error || "Unable to load payment mode.";
+    return;
+  }
+
+  panel.dataset.mode = data.mode;
+
+  status.textContent = data.mode.toUpperCase();
+
+  button.textContent =
+    data.mode === "live"
+      ? "Switch to Test Mode"
+      : "Switch to Live Mode";
+
+  message.textContent = "Only administrators can change this setting.";
+
+  button.disabled = false;
+  button.onclick = toggleAdminPaymentMode;
+}
+
+
+async function toggleAdminPaymentMode() {
+  const panel = document.getElementById("adminPaymentModePanel");
+  const button = document.getElementById("adminPaymentModeToggle");
+  const message = document.getElementById("adminPaymentModeMessage");
+
+  if (!panel || !button || !message) return;
+
+  const currentMode = panel.dataset.mode;
+  const nextMode = currentMode === "live" ? "test" : "live";
+
+  const confirmation = nextMode === "live"
+    ? "Switch to LIVE mode? Real customer payments will be processed."
+    : "Switch to TEST mode? Real customer payments will be disabled.";
+
+  if (!confirm(confirmation)) return;
+
+  button.disabled = true;
+  message.textContent = "Updating payment mode...";
+
+  const { data, error } = await supabaseClient.functions.invoke(
+    "Paystack-Payment",
+    {
+      body: {
+        action: "set_payment_mode",
+        mode: nextMode
+      }
+    }
+  );
+
+  if (error || !data?.success) {
+    message.textContent =
+      data?.error || "Unable to change payment mode.";
+    button.disabled = false;
+    return;
+  }
+
+  await loadAdminPaymentMode();
+}
+
 function updateSubjectFilter() {
   const select = $("#subjectFilter");
   if (!select) return;
@@ -2437,6 +2517,7 @@ async function takeQuiz(quizId) {
   const content = document.getElementById("takeQuizContent");
 
   panel.hidden = false;
+  await loadAdminPaymentMode();
   content.innerHTML = "<p>Loading quiz questions...</p>";
   panel.scrollIntoView({ behavior: "smooth" });
 
