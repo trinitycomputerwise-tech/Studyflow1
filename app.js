@@ -4210,3 +4210,36 @@ if (refreshPayoutReportsButton) {
   loadAdminPayoutReports();
 }
 
+window.shareStudyFlowTutoring = async function (platform) {
+  const shareUrl = window.location.origin + window.location.pathname;
+  const shareText =
+    "Need extra academic support? Explore StudyFlow Tutoring Services and connect with tutors for personalized learning.";
+
+  const encodedUrl = encodeURIComponent(shareUrl);
+  const encodedText = encodeURIComponent(shareText);
+
+  if (platform === "whatsapp") {
+    window.open(
+      `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
+      "_blank"
+    );
+  } else if (platform === "facebook") {
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      "_blank"
+    );
+  } else if (platform === "x") {
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+      "_blank"
+    );
+  } else if (platform === "copy") {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert("StudyFlow Tutoring link copied successfully!");
+    } catch (error) {
+      alert("Unable to copy the link. Please copy the website address from your browser.");
+    }
+  }
+};
+
