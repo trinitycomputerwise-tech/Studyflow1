@@ -3981,6 +3981,42 @@ async function loadTutorPayoutRequests() {
 
       const status = document.createElement("p");
       status.textContent = "Status: " + request.status;
+      status.textContent = "Status: " + request.status;
+      const bankButton = document.createElement("button");
+      bankButton.type = "button";
+      bankButton.className = "secondary-btn";
+      bankButton.textContent = "View Bank Details";
+
+      bankButton.addEventListener("click", async () => {
+        bankButton.disabled = true;
+        bankButton.textContent = "Loading...";
+
+        try {
+          const { data, error } = await supabaseClient.rpc(
+            "admin_get_tutor_payout_bank_details",
+            { p_request_id: request.id }
+          );
+
+          if (error) throw error;
+
+          const details = Array.isArray(data) ? data[0] : data;
+
+          if (!details) {
+            throw new Error("No bank details were returned.");
+          }
+
+          alert(
+            "Bank: " + details.bank_name +
+            "\nAccount name: " + details.account_name +
+            "\nAccount number: " + details.account_number
+          );
+        } catch (error) {
+          alert("Could not load bank details: " + error.message);
+        } finally {
+          bankButton.disabled = false;
+          bankButton.textContent = "View Bank Details";
+        }
+      });
 
       const date = document.createElement("p");
       date.textContent =
@@ -3997,6 +4033,10 @@ async function loadTutorPayoutRequests() {
         : "";
 
       card.append(heading, amount, status, date);
+
+      if (["Pending", "Approved"].includes(request.status)) {
+        card.appendChild(bankButton);
+      }
 
       if (reference.textContent) card.appendChild(reference);
       if (note.textContent) card.appendChild(note);
