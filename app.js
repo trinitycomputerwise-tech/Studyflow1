@@ -608,6 +608,92 @@ if (tutorProfileForm) {
   });
 }
 
+const tutorBankDetailsForm = document.getElementById("tutorBankDetailsForm");
+
+if (tutorBankDetailsForm) {
+  const bankMessage = document.getElementById("tutorBankDetailsMessage");
+
+  async function loadTutorBankDetails() {
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    if (authError || !authData.user) return;
+
+    const { data, error } = await supabaseClient
+      .from("tutor_bank_details")
+      .select("bank_name, account_name, account_number")
+      .eq("tutor_id", authData.user.id)
+      .maybeSingle();
+
+    if (error) {
+      bankMessage.textContent = "Could not load bank details.";
+      console.error("Bank details loading error:", error);
+      return;
+    }
+
+    if (data) {
+      document.getElementById("tutorBankName").value = data.bank_name;
+      document.getElementById("tutorBankAccountName").value = data.account_name;
+      document.getElementById("tutorBankAccountNumber").value =
+        data.account_number;
+    }
+  }
+
+  tutorBankDetailsForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const submitButton =
+      tutorBankDetailsForm.querySelector('button[type="submit"]');
+
+    const bankName = document.getElementById("tutorBankName").value.trim();
+    const accountName =
+      document.getElementById("tutorBankAccountName").value.trim();
+    const accountNumber =
+      document.getElementById("tutorBankAccountNumber").value.trim();
+
+    if (!bankName || !accountName || !/^\d{10}$/.test(accountNumber)) {
+      bankMessage.textContent =
+        "Enter your bank name, account name and valid 10-digit account number.";
+      return;
+    }
+
+    submitButton.disabled = true;
+    bankMessage.textContent = "Saving bank details...";
+
+    try {
+      const { data: authData, error: authError } =
+        await supabaseClient.auth.getUser();
+
+      if (authError || !authData.user) {
+        throw new Error("Please sign in before saving bank details.");
+      }
+
+      const { error } = await supabaseClient
+        .from("tutor_bank_details")
+        .upsert({
+          tutor_id: authData.user.id,
+          bank_name: bankName,
+          account_name: accountName,
+          account_number: accountNumber,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      bankMessage.textContent = "Bank details saved successfully!";
+    } catch (error) {
+      bankMessage.textContent =
+        "Could not save bank details: " + error.message;
+      console.error("StudyFlow bank details error:", error);
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  loadTutorBankDetails();
+}
+
+
 
 
 function isOverdue(task) { return task.status !== "Completed" && task.dueDate < todayISO(); }
