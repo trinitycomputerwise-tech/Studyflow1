@@ -982,6 +982,7 @@ async function setView(view) {
   if (view === "materials") loadStudyMaterials();
   if (view === "payouts") loadTutorPayouts();
   if (view === "payouts") loadMaterialTutorPayouts();
+  if (view === "payouts") loadTutorPayoutRequests();
   if (view === "quizzes") loadQuizzes();
   if (view === "quizzes") loadManagedQuizResults();
 
@@ -3907,3 +3908,189 @@ async function loadPremiumMembershipStatus() {
 document.addEventListener("DOMContentLoaded", () => {
   loadPremiumMembershipStatus();
 });
+async function loadTutorPayoutRequests() {
+  const list = document.getElementById("tutorPayoutRequestsList");
+
+  if (!list) return;
+
+  list.textContent = "Loading tutor payout requests...";
+
+  try {
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    if (authError || !authData.user) {
+      throw new Error("Please sign in first.");
+    }
+
+    const { data: roles, error: roleError } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", authData.user.id);
+
+    if (roleError) throw roleError;
+
+    if (!roles?.some(item => item.role === "admin")) {
+      list.textContent = "Administrator access required.";
+      return;
+    }
+
+    const { data: requests, error } = await supabaseClient
+      .from("tutor_payout_requests")
+      .select("*")
+      .order("requested_at", { ascending: false });
+
+    if (error) throw error;
+
+    if (!requests || requests.length === 0) {
+      list.textContent = "No tutor payout requests have been submitted.";
+      return;
+    }
+
+    const tutorIds = [...new Set(requests.map(r => r.tutor_id))];
+
+    const { data: tutors, error: tutorError } = await supabaseClient
+      .from("tutor_profiles")
+      .select("id, display_name")
+      .in("id", tutorIds);
+
+    if (tutorError) throw tutorError;
+
+    const tutorNames = Object.fromEntries(
+      (tutors || []).map(t => [t.id, t.display_name])
+    );
+
+    const money = amount =>
+      "₦" + Number(amount || 0).toLocaleString("en-NG", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+    list.replaceChildren();
+
+    requests.forEach(request => {
+      const card = document.createElement("div");
+      card.className = "panel";
+      card.style.marginTop = "12px";
+
+      const heading = document.createElement("h3");
+      heading.textContent = tutorNames[request.tutor_id] || "Tutor";
+
+      const amount = document.createElement("p");
+      amount.textContent = "Requested amount: " + money(request.amount_ngn);
+
+      const status = document.createElement("p");
+      status.textContent = "Status: " + request.status;
+
+      const date = document.createElement("p");
+      date.textContent =
+        "Requested: " + new Date(request.requested_at).toLocaleString("en-NG");
+
+      const reference = document.createElement("p");
+      reference.textContent = request.payout_reference
+        ? "Transfer reference: " + request.payout_reference
+        : "";
+
+      const note = document.createElement("p");
+      note.textContent = request.admin_note
+        ? "Admin note: " + request.admin_note
+        : "";
+
+      card.append(heading, amount, status, date);
+
+      if (reference.textContent) card.appendChild(reference);
+      if (note.textContent) card.appendChild(note);
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "10px";
+      actions.style.flexWrap = "wrap";
+
+      function addAction(label, action, className = "primary-btn") {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = className;
+        button.textContent = label;
+
+        button.addEventListener("click", async () => {
+          let payoutReference = null;
+          let adminNote = null;
+
+          if (action === "reject") {
+            adminNote = prompt("Enter the reason for rejecting this request:");
+
+            if (adminNote === null) return;
+          }
+
+          if (action === "approve") {
+            adminNote = prompt("Optional note for this approval:") || null;
+
+            if (!confirm("Approve this tutor payout request?")) return;
+          }
+
+          if (action === "paid") {
+            payoutReference = prompt(
+              "Enter the bank transfer reference from the completed transfer:"
+            );
+
+            if (payoutReference === null) return;
+
+            if (!payoutReference.trim()) {
+              alert("A transfer reference is required.");
+              return;
+            }
+
+            if (!confirm(
+              "Have you already transferred this amount to the tutor's bank account?"
+            )) return;
+          }
+
+          button.disabled = true;
+          button.textContent = "Processing...";
+
+          const { error: processError } = await supabaseClient.rpc(
+            "admin_process_tutor_payout_request",
+            {
+              p_request_id: request.id,
+              p_action: action,
+              p_payout_reference: payoutReference,
+              p_admin_note: adminNote
+            }
+          );
+
+          if (processError) {
+            alert("Payout action failed: " + processError.message);
+            button.disabled = false;
+            button.textContent = label;
+            return;
+          }
+
+          alert("Payout request updated successfully.");
+          await loadTutorPayoutRequests();
+        });
+
+        actions.appendChild(button);
+      }
+
+      if (request.status === "Pending") {
+        addAction("Approve", "approve");
+        addAction("Reject", "reject", "secondary-btn");
+      }
+
+      if (request.status === "Approved") {
+        addAction("Reject", "reject", "secondary-btn");
+        addAction("Mark as Paid", "paid");
+      }
+
+      if (actions.children.length > 0) {
+        card.appendChild(actions);
+      }
+
+      list.appendChild(card);
+    });
+
+  } catch (error) {
+    list.textContent = "Unable to load payout requests: " + error.message;
+    console.error("Tutor payout requests error:", error);
+  }
+}
