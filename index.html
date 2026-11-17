@@ -544,6 +544,52 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
   </form>
 </div>
 
+<div class="panel" id="tutorEarningsPanel" style="margin-top:25px;">
+  <h2>My Tutor Earnings</h2>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <p class="muted">Available earnings</p>
+      <h3 id="tutorAvailableEarnings">₦0.00</h3>
+    </article>
+
+    <article class="stat-card">
+      <p class="muted">Pending payout requests</p>
+      <h3 id="tutorPendingEarnings">₦0.00</h3>
+    </article>
+
+    <article class="stat-card">
+      <p class="muted">Total paid</p>
+      <h3 id="tutorTotalPaid">₦0.00</h3>
+    </article>
+  </div>
+
+  <div style="margin-top:20px;">
+    <h3>Request a payout</h3>
+    <p class="muted">
+      Combine your eligible tutoring-session and study-material
+      earnings into one payout request.
+    </p>
+
+    <button
+      type="button"
+      id="requestTutorPayoutButton"
+      class="primary-button"
+    >
+      Request payout
+    </button>
+
+    <p id="tutorPayoutRequestMessage" class="muted" role="status"></p>
+  </div>
+
+  <div style="margin-top:25px;">
+    <h3>My payout request history</h3>
+    <div id="tutorPayoutRequestHistory">
+      <p class="muted">Loading payout history...</p>
+    </div>
+  </div>
+</div>
+
         </section>
 
         <section class="panel">
