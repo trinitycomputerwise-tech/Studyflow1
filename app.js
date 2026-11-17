@@ -693,6 +693,7 @@ async function setView(view) {
   if (view === "tutoring") loadTutoringData();
   if (view === "materials") loadStudyMaterials();
   if (view === "payouts") loadTutorPayouts();
+  if (view === "payouts") loadMaterialTutorPayouts();
   if (view === "quizzes") loadQuizzes();
   if (view === "quizzes") loadManagedQuizResults();
 
