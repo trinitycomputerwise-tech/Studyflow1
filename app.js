@@ -4134,3 +4134,79 @@ async function loadTutorPayoutRequests() {
     console.error("Tutor payout requests error:", error);
   }
 }
+
+const refreshPayoutReportsButton =
+  document.getElementById("refreshPayoutReports");
+
+if (refreshPayoutReportsButton) {
+  const reportsMessage =
+    document.getElementById("payoutReportsMessage");
+
+  const formatReportAmount = (amount) =>
+    "₦" + Number(amount || 0).toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+  async function loadAdminPayoutReports() {
+    refreshPayoutReportsButton.disabled = true;
+    reportsMessage.textContent = "Loading payout reports...";
+
+    try {
+      const { data: authData, error: authError } =
+        await supabaseClient.auth.getUser();
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error("Please log in as an administrator.");
+      }
+
+      const { data, error } = await supabaseClient.rpc(
+        "admin_get_payout_report"
+      );
+
+      if (error) throw error;
+
+      const report = Array.isArray(data) ? data[0] : data;
+
+      if (!report) {
+        throw new Error("No report data was returned.");
+      }
+
+      document.getElementById("reportTutoringPayments").textContent =
+        formatReportAmount(report.tutoring_payments_total);
+
+      document.getElementById("reportMaterialSales").textContent =
+        formatReportAmount(report.material_sales_total);
+
+      document.getElementById("reportTotalCommission").textContent =
+        formatReportAmount(report.studyflow_commissions_total);
+
+      document.getElementById("reportTutorEarnings").textContent =
+        formatReportAmount(report.tutor_earnings_total);
+
+      document.getElementById("reportTotalPaid").textContent =
+        formatReportAmount(report.total_payouts_paid);
+
+      document.getElementById("reportOutstanding").textContent =
+        formatReportAmount(report.outstanding_tutor_earnings);
+
+      reportsMessage.textContent = "Payout reports updated successfully.";
+    } catch (error) {
+      console.error("Payout reports error:", error);
+      reportsMessage.textContent =
+        "Could not load reports: " + error.message;
+    } finally {
+      refreshPayoutReportsButton.disabled = false;
+    }
+  }
+
+  refreshPayoutReportsButton.addEventListener(
+    "click",
+    loadAdminPayoutReports
+  );
+
+  loadAdminPayoutReports();
+}
+
