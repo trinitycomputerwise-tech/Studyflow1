@@ -493,6 +493,57 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
             <button type="submit" class="primary-button">Save tutor profile</button>
             <p id="tutorProfileMessage" class="muted" role="status"></p>
           </form>
+          
+<div class="panel" id="tutorBankDetailsPanel" style="margin-top:25px;">
+  <h2>My Bank Details</h2>
+  <p class="muted">
+    Save your bank details so StudyFlow can process your tutor payouts.
+  </p>
+
+  <form id="tutorBankDetailsForm">
+    <label>
+      Bank name
+      <input
+        id="tutorBankName"
+        type="text"
+        maxlength="100"
+        required
+        placeholder="e.g. Access Bank"
+      >
+    </label>
+
+    <label>
+      Account holder's name
+      <input
+        id="tutorBankAccountName"
+        type="text"
+        maxlength="100"
+        required
+        placeholder="Name registered with your bank"
+      >
+    </label>
+
+    <label>
+      Account number
+      <input
+        id="tutorBankAccountNumber"
+        type="password"
+        inputmode="numeric"
+        maxlength="10"
+        pattern="[0-9]{10}"
+        required
+        placeholder="Enter your 10-digit account number"
+      >
+    </label>
+
+    <button type="submit" class="primary-button">
+      Save bank details
+    </button>
+
+    <p id="tutorBankDetailsMessage" class="muted" role="status"></p>
+  </form>
+</div>
+
         </section>
 
         <section class="panel">
