@@ -2406,6 +2406,26 @@ function renderStudyMaterials(materials) {
         <p><strong>Price:</strong> ₦${Number(item.price || 0).toLocaleString("en-NG")}</p>
         <p><strong>Uploaded:</strong> ${uploadDate}</p>
         <p>${escapeHtml(item.description || "")}</p>
+        
+<div class="social-share-section">
+  <p><strong>Share this study material:</strong></p>
+  <button type="button"
+    data-share-material="${escapeHtml(item.id)}"
+    data-share-platform="whatsapp">WhatsApp</button>
+
+  <button type="button"
+    data-share-material="${escapeHtml(item.id)}"
+    data-share-platform="facebook">Facebook</button>
+
+  <button type="button"
+    data-share-material="${escapeHtml(item.id)}"
+    data-share-platform="x">X</button>
+
+  <button type="button"
+    data-share-material="${escapeHtml(item.id)}"
+    data-share-platform="copy">Copy Link</button>
+</div>
+
 
         ${item.file_path
           ? `<button class="secondary-btn" onclick="downloadStudyMaterial('${item.id}')">Download Material</button>`
@@ -2419,6 +2439,58 @@ function renderStudyMaterials(materials) {
       </div>
     `;
   }).join("");
+  
+  list.onclick = async function (event) {
+    const button = event.target.closest("[data-share-material]");
+    if (!button) return;
+
+    const materialId = button.dataset.shareMaterial;
+    const platform = button.dataset.sharePlatform;
+
+    const material = filtered.find(
+      item => item.id === materialId
+    );
+
+    if (!material) return;
+
+    const shareUrl =
+      window.location.origin +
+      window.location.pathname +
+      "#materialsView";
+
+    const shareText =
+      `Check out "${material.title}" on StudyFlow Study Materials!`;
+
+    const url = encodeURIComponent(shareUrl);
+    const text = encodeURIComponent(shareText);
+
+    if (platform === "whatsapp") {
+      window.open(
+        `https://wa.me/?text=${text}%20${url}`,
+        "_blank"
+      );
+    } else if (platform === "facebook") {
+      window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+        "_blank"
+      );
+    } else if (platform === "x") {
+      window.open(
+        `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+        "_blank"
+      );
+    } else if (platform === "copy") {
+      try {
+        await navigator.clipboard.writeText(
+          `${shareText} ${shareUrl}`
+        );
+        alert("Study material sharing link copied!");
+      } catch (error) {
+        alert("Unable to copy. Please copy the website address manually.");
+      }
+    }
+  };
+
 
   addStudyMaterialActions(filtered);
 }
