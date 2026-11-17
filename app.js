@@ -694,6 +694,208 @@ if (tutorBankDetailsForm) {
 }
 
 
+const tutorPayoutButton = document.getElementById(
+  "requestTutorPayoutButton"
+);
+
+if (tutorPayoutButton) {
+  const payoutMessage = document.getElementById(
+    "tutorPayoutRequestMessage"
+  );
+
+  const formatTutorMoney = amount =>
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN"
+    }).format(Number(amount || 0));
+
+  async function loadTutorPayoutDashboard() {
+    const history = document.getElementById(
+      "tutorPayoutRequestHistory"
+    );
+
+    try {
+      const { data: authData, error: authError } =
+        await supabaseClient.auth.getUser();
+
+      if (authError || !authData.user) {
+        throw new Error("Please sign in to view your earnings.");
+      }
+
+      const tutorId = authData.user.id;
+
+      const [
+        tutoringResult,
+        materialResult,
+        itemsResult,
+        requestsResult
+      ] = await Promise.all([
+        supabaseClient
+          .from("tutor_payouts")
+          .select("id, tutor_earning_ngn, payout_status")
+          .eq("tutor_id", tutorId),
+
+        supabaseClient
+          .from("material_tutor_payouts")
+          .select("id, tutor_earning_ngn, payout_status")
+          .eq("tutor_id", tutorId),
+
+        supabaseClient
+          .from("tutor_payout_request_items")
+          .select("tutor_payout_id, material_payout_id"),
+
+        supabaseClient
+          .from("tutor_payout_requests")
+          .select("id, amount_ngn, status, requested_at, payout_reference")
+          .eq("tutor_id", tutorId)
+          .order("requested_at", { ascending: false })
+      ]);
+
+      const results = [
+        tutoringResult,
+        materialResult,
+        itemsResult,
+        requestsResult
+      ];
+
+      const failedResult = results.find(result => result.error);
+
+      if (failedResult) throw failedResult.error;
+
+      const tutoring = tutoringResult.data || [];
+      const materials = materialResult.data || [];
+      const items = itemsResult.data || [];
+      const requests = requestsResult.data || [];
+
+      const claimedTutoring = new Set(
+        items.map(item => item.tutor_payout_id).filter(Boolean)
+      );
+
+      const claimedMaterials = new Set(
+        items.map(item => item.material_payout_id).filter(Boolean)
+      );
+
+      const availableTutoring = tutoring
+        .filter(p =>
+          p.payout_status === "Ready for payout" &&
+          !claimedTutoring.has(p.id)
+        )
+        .reduce((sum, p) => sum + Number(p.tutor_earning_ngn), 0);
+
+      const availableMaterials = materials
+        .filter(p =>
+          p.payout_status === "Ready for payout" &&
+          !claimedMaterials.has(p.id)
+        )
+        .reduce((sum, p) => sum + Number(p.tutor_earning_ngn), 0);
+
+      const totalAvailable =
+        availableTutoring + availableMaterials;
+
+      const totalPending = requests
+        .filter(r =>
+          ["Pending", "Approved"].includes(r.status)
+        )
+        .reduce((sum, r) => sum + Number(r.amount_ngn), 0);
+
+      const totalPaid = [...tutoring, ...materials]
+        .filter(p => p.payout_status === "Paid")
+        .reduce((sum, p) => sum + Number(p.tutor_earning_ngn), 0);
+
+      document.getElementById(
+        "tutorAvailableEarnings"
+      ).textContent = formatTutorMoney(totalAvailable);
+
+      document.getElementById(
+        "tutorPendingEarnings"
+      ).textContent = formatTutorMoney(totalPending);
+
+      document.getElementById(
+        "tutorTotalPaid"
+      ).textContent = formatTutorMoney(totalPaid);
+
+      history.replaceChildren();
+
+      if (!requests.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "You have not submitted any payout requests.";
+        history.appendChild(empty);
+      } else {
+        requests.forEach(request => {
+          const entry = document.createElement("div");
+          entry.className = "payout-history-item";
+          entry.style.padding = "12px 0";
+          entry.style.borderBottom = "1px solid var(--border-color, #ddd)";
+
+          const amount = document.createElement("strong");
+          amount.textContent = formatTutorMoney(request.amount_ngn);
+
+          const status = document.createElement("p");
+          status.className = "muted";
+          status.textContent = "Status: " + request.status;
+
+          const date = document.createElement("small");
+          date.textContent = new Date(
+            request.requested_at
+          ).toLocaleString("en-NG");
+
+          entry.append(amount, status, date);
+
+          if (request.payout_reference) {
+            const reference = document.createElement("p");
+            reference.textContent =
+              "Payout reference: " + request.payout_reference;
+            entry.appendChild(reference);
+          }
+
+          history.appendChild(entry);
+        });
+      }
+
+      tutorPayoutButton.disabled = totalAvailable <= 0;
+    } catch (error) {
+      payoutMessage.textContent =
+        "Could not load payout information: " + error.message;
+
+      console.error("Tutor payout dashboard error:", error);
+    }
+  }
+
+  tutorPayoutButton.addEventListener("click", async () => {
+    tutorPayoutButton.disabled = true;
+    payoutMessage.textContent = "Submitting your payout request...";
+
+    try {
+      const { data, error } = await supabaseClient.rpc(
+        "request_tutor_payout"
+      );
+
+      if (error) throw error;
+
+      const request = Array.isArray(data) ? data[0] : data;
+
+      if (!request) {
+        throw new Error("No payout request information was returned.");
+      }
+
+      payoutMessage.textContent =
+        "Payout request submitted successfully. Amount: " +
+        formatTutorMoney(request.amount_ngn);
+
+      await loadTutorPayoutDashboard();
+    } catch (error) {
+      payoutMessage.textContent =
+        "Payout request failed: " + error.message;
+
+      console.error("Tutor payout request error:", error);
+      tutorPayoutButton.disabled = false;
+    }
+  });
+
+  loadTutorPayoutDashboard();
+}
+
 
 
 function isOverdue(task) { return task.status !== "Completed" && task.dueDate < todayISO(); }
