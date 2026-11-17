@@ -1808,6 +1808,209 @@ async function loadTutorPayouts() {
   });
 }
 
+async function loadMaterialTutorPayouts() {
+  const list = document.getElementById("materialPayoutsList");
+  const summary = document.getElementById("materialPayoutsSummary");
+
+  if (!list || !summary) return;
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    list.textContent = "Please sign in first.";
+    summary.textContent = "";
+    return;
+  }
+
+  const { data: roles, error: roleError } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  const isAdmin = !roleError && roles?.some(item => item.role === "admin");
+
+  if (!isAdmin) {
+    list.textContent = "Administrator access required.";
+    summary.textContent = "";
+    return;
+  }
+
+  list.textContent = "Loading material tutor payouts...";
+  summary.textContent = "";
+
+  const { data: payouts, error } = await supabaseClient
+    .from("material_tutor_payouts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Unable to load material tutor payouts.";
+    console.error(error);
+    return;
+  }
+
+  const tutorIds = [...new Set((payouts || []).map(p => p.tutor_id))];
+
+  let tutorNames = {};
+
+  if (tutorIds.length > 0) {
+    const { data: tutors, error: tutorError } = await supabaseClient
+      .from("tutor_profiles")
+      .select("id, display_name")
+      .in("id", tutorIds);
+
+    if (tutorError) {
+      console.error("Could not load tutor names:", tutorError);
+    } else {
+      tutorNames = Object.fromEntries(
+        (tutors || []).map(t => [t.id, t.display_name])
+      );
+    }
+  }
+
+  const money = amount =>
+    "₦" + Number(amount || 0).toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+  const totalSales = (payouts || []).reduce(
+    (sum, p) => sum + Number(p.student_payment_ngn || 0), 0
+  );
+
+  const totalCommission = (payouts || []).reduce(
+    (sum, p) => sum + Number(p.platform_commission_ngn || 0), 0
+  );
+
+  const totalTutorEarnings = (payouts || []).reduce(
+    (sum, p) => sum + Number(p.tutor_earning_ngn || 0), 0
+  );
+
+  const readyPayouts = (payouts || []).filter(
+    p => p.payout_status === "Ready for payout"
+  );
+
+  const readyAmount = readyPayouts.reduce(
+    (sum, p) => sum + Number(p.tutor_earning_ngn || 0), 0
+  );
+
+  summary.innerHTML = `
+    <div class="panel" style="margin-top:12px;">
+      <p><strong>Total material sales:</strong> ${money(totalSales)}</p>
+      <p><strong>StudyFlow commission:</strong> ${money(totalCommission)}</p>
+      <p><strong>Total tutor earnings:</strong> ${money(totalTutorEarnings)}</p>
+      <p><strong>Awaiting tutor payout:</strong> ${money(readyAmount)}</p>
+      <p><strong>Records awaiting payment:</strong> ${readyPayouts.length}</p>
+    </div>
+  `;
+
+  if (!payouts || payouts.length === 0) {
+    list.innerHTML = "<p>No material tutor payouts available yet.</p>";
+    return;
+  }
+
+  list.innerHTML = payouts.map(payout => {
+    const tutorName = tutorNames[payout.tutor_id] || "Tutor";
+    const isReady = payout.payout_status === "Ready for payout";
+
+    return `
+      <div class="panel" style="margin-top:12px;">
+        <h3>${escapeHtml(tutorName)}</h3>
+
+        <p><strong>Tutor ID:</strong>
+          ${escapeHtml(payout.tutor_id)}
+        </p>
+
+        <p><strong>Student payment:</strong>
+          ${money(payout.student_payment_ngn)}
+        </p>
+
+        <p><strong>StudyFlow commission:</strong>
+          ${money(payout.platform_commission_ngn)}
+        </p>
+
+        <p><strong>Tutor earnings:</strong>
+          ${money(payout.tutor_earning_ngn)}
+        </p>
+
+        <p><strong>Status:</strong>
+          ${escapeHtml(payout.payout_status)}
+        </p>
+
+        ${payout.payout_reference ? `
+          <p><strong>Transfer reference:</strong>
+            ${escapeHtml(payout.payout_reference)}
+          </p>
+        ` : ""}
+
+        ${payout.paid_at ? `
+          <p><strong>Paid at:</strong>
+            ${escapeHtml(new Date(payout.paid_at).toLocaleString("en-NG"))}
+          </p>
+        ` : ""}
+
+        ${isReady ? `
+          <button
+            class="primary-btn"
+            type="button"
+            data-material-mark-paid="${escapeHtml(payout.id)}"
+          >
+            Mark Material Payout as Paid
+          </button>
+        ` : ""}
+      </div>
+    `;
+  }).join("");
+
+  list.querySelectorAll("[data-material-mark-paid]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const payoutId = button.dataset.materialMarkPaid;
+
+      const reference = prompt(
+        "Enter the bank transfer reference from your bank receipt:"
+      );
+
+      if (reference === null) return;
+
+      const cleanReference = reference.trim();
+
+      if (!cleanReference || cleanReference.length > 200) {
+        alert("Enter a valid transfer reference (1–200 characters).");
+        return;
+      }
+
+      if (!confirm(
+        "Have you already transferred the tutor's earnings to their bank account?"
+      )) {
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Saving...";
+
+      const { error: payoutError } = await supabaseClient.rpc(
+        "mark_material_tutor_payout_paid",
+        {
+          p_payout_id: payoutId,
+          p_payout_reference: cleanReference
+        }
+      );
+
+      if (payoutError) {
+        alert("Could not record material payout: " + payoutError.message);
+        button.disabled = false;
+        button.textContent = "Mark Material Payout as Paid";
+        return;
+      }
+
+      alert("Material tutor payout recorded successfully.");
+      await loadMaterialTutorPayouts();
+    });
+  });
+}
+
+
 
 function renderStudyMaterials(materials) {
   const list = document.getElementById("materialsList");
