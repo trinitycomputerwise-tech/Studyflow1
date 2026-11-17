@@ -809,6 +809,53 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
     <p class="muted">Loading material tutor payouts...</p>
   </div>
 </section>
+<section class="panel" id="adminPayoutReports" style="margin-top:25px;">
+  <h2>Admin Payout Reports</h2>
+
+  <p class="muted">
+    Financial overview of tutoring services, study-material sales,
+    commissions and tutor payouts.
+  </p>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <p class="muted">Total tutoring payments</p>
+      <h3 id="reportTutoringPayments">₦0.00</h3>
+    </article>
+
+    <article class="stat-card">
+      <p class="muted">Total material sales</p>
+      <h3 id="reportMaterialSales">₦0.00</h3>
+    </article>
+
+    <article class="stat-card">
+      <p class="muted">StudyFlow commissions</p>
+      <h3 id="reportTotalCommission">₦0.00</h3>
+    </article>
+
+    <article class="stat-card">
+      <p class="muted">Tutor earnings</p>
+      <h3 id="reportTutorEarnings">₦0.00</h3>
+    </article>
+
+    <article class="stat-card">
+      <p class="muted">Total payouts paid</p>
+      <h3 id="reportTotalPaid">₦0.00</h3>
+    </article>
+
+    <article class="stat-card">
+      <p class="muted">Outstanding tutor earnings</p>
+      <h3 id="reportOutstanding">₦0.00</h3>
+    </article>
+  </div>
+
+  <button type="button" class="primary-button"
+    id="refreshPayoutReports">
+    Refresh Reports
+  </button>
+
+  <p id="payoutReportsMessage" class="muted" role="status"></p>
+</section>
         
 </section>
       
