@@ -294,7 +294,67 @@ price.textContent = tutor.session_price_ngn
     }).format(tutor.session_price_ngn)
   : "Price per session: Not set";
 
-card.append(heading, subjects, bio, experience, availability, price);
+const shareSection = document.createElement("div");
+shareSection.className = "social-share-section";
+
+const shareHeading = document.createElement("p");
+shareHeading.textContent = "Share this tutor's profile:";
+shareSection.appendChild(shareHeading);
+
+const shareUrl =
+  window.location.origin +
+  window.location.pathname +
+  "#tutoringView";
+
+const shareText =
+  `Meet ${tutor.display_name} on StudyFlow! Subjects: ${(tutor.subjects || []).join(", ")}.`;
+
+["whatsapp", "facebook", "x", "copy"].forEach(platform => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent =
+    platform === "x" ? "X" :
+    platform === "copy" ? "Copy Link" :
+    platform.charAt(0).toUpperCase() + platform.slice(1);
+
+  button.addEventListener("click", async () => {
+    const url = encodeURIComponent(shareUrl);
+    const text = encodeURIComponent(shareText);
+
+    if (platform === "whatsapp") {
+      window.open(`https://wa.me/?text=${text}%20${url}`, "_blank");
+    } else if (platform === "facebook") {
+      window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+        "_blank"
+      );
+    } else if (platform === "x") {
+      window.open(
+        `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+        "_blank"
+      );
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        alert("Tutor profile sharing link copied!");
+      } catch (error) {
+        alert("Unable to copy. Please copy the website address manually.");
+      }
+    }
+  });
+
+  shareSection.appendChild(button);
+});
+
+card.append(
+  heading,
+  subjects,
+  bio,
+  experience,
+  availability,
+  price,
+  shareSection
+);
 
       if (tutor.id !== authData.user.id) {
         const form = document.createElement("form");
