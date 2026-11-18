@@ -640,6 +640,50 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
           </div>
         </section>
       </section>
+      <section class="view" id="messagesView">
+  <div class="page-intro">
+    <div>
+      <p class="eyebrow">STUDENT AND TUTOR COMMUNICATION</p>
+      <h1>My Messages</h1>
+      <p class="muted">
+        Communicate privately with tutors about your paid tutoring sessions.
+      </p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Your Conversations</h2>
+    <div id="tutorConversationList">
+      <p class="muted">Loading your conversations...</p>
+    </div>
+  </div>
+
+  <div class="panel" id="tutorMessagePanel" style="margin-top:20px;" hidden>
+    <h2 id="tutorMessageHeading">Conversation</h2>
+
+    <div
+      id="tutorMessagesList"
+      style="min-height:200px; max-height:400px; overflow-y:auto; padding:12px;"
+    ></div>
+
+    <form id="tutorMessageForm">
+      <label for="tutorMessageInput">Write a message</label>
+      <textarea
+        id="tutorMessageInput"
+        rows="3"
+        maxlength="5000"
+        required
+        placeholder="Type your message..."
+      ></textarea>
+
+      <button type="submit" class="primary-button">
+        Send Message
+      </button>
+
+      <p id="tutorMessageStatus" class="muted" role="status"></p>
+    </form>
+  </div>
+</section>
       
       <section class="view" id="materialsView">
         <div class="page-intro">
