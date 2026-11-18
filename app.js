@@ -4843,3 +4843,52 @@ window.shareStudyFlowTutoring = async function (platform) {
   }
 };
 
+
+const tutorMessageForm = document.getElementById("tutorMessageForm");
+
+if (tutorMessageForm) {
+  tutorMessageForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const input = document.getElementById("tutorMessageInput");
+    const status = document.getElementById("tutorMessageStatus");
+    const message = input.value.trim();
+
+    if (!activeTutorConversationId || !message) {
+      status.textContent = "Select a conversation and enter a message.";
+      return;
+    }
+
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    const user = authData?.user;
+
+    if (authError || !user) {
+      status.textContent = "Please sign in again.";
+      return;
+    }
+
+    status.textContent = "Sending message...";
+
+    const { error } = await supabaseClient
+      .from("tutor_messages")
+      .insert({
+        conversation_id: activeTutorConversationId,
+        sender_id: user.id,
+        message
+      });
+
+    if (error) {
+      console.error("Message sending error:", error);
+      status.textContent = "Message could not be sent. Please try again.";
+      return;
+    }
+
+    input.value = "";
+    status.textContent = "Message sent successfully.";
+
+    await loadTutorMessages();
+    await updateUnreadMessageCount();
+  });
+}
