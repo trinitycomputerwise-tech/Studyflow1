@@ -1045,8 +1045,228 @@ async function setView(view) {
   if (view === "payouts") loadTutorPayoutRequests();
   if (view === "quizzes") loadQuizzes();
   if (view === "quizzes") loadManagedQuizResults();
+  if (view === "messages") loadTutorConversations();
 
   window.scrollTo({top:0, behavior:"smooth"});
+}
+
+let activeTutorConversationId = null;
+
+async function loadTutorConversations() {
+  const list = document.getElementById("tutorConversationList");
+  const messagePanel = document.getElementById("tutorMessagePanel");
+
+  messagePanel.hidden = true;
+  list.textContent = "Loading your conversations...";
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  const user = authData?.user;
+
+  if (authError || !user) {
+    list.textContent = "Please sign in to view your conversations.";
+    return;
+  }
+
+  const { data: conversations, error } = await supabaseClient
+    .from("tutor_conversations")
+    .select("id, request_id, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Conversation loading error:", error);
+    list.textContent = "Could not load conversations. Please try again.";
+    return;
+  }
+
+  if (!conversations?.length) {
+    list.textContent = "You have no paid tutoring conversations yet.";
+    return;
+  }
+
+  const requestIds = conversations.map(item => item.request_id);
+
+  const { data: requests, error: requestError } = await supabaseClient
+    .from("tutoring_requests")
+    .select("id, subject, student_id, tutor_id")
+    .in("id", requestIds);
+
+  if (requestError) {
+    console.error("Tutoring request loading error:", requestError);
+    list.textContent = "Could not load tutoring request details.";
+    return;
+  }
+
+  const tutorIds = [...new Set((requests || []).map(item => item.tutor_id))];
+
+  const { data: tutors, error: tutorError } = await supabaseClient
+    .from("tutor_profiles")
+    .select("id, display_name")
+    .in("id", tutorIds);
+
+  if (tutorError) {
+    console.error("Tutor profile loading error:", tutorError);
+    list.textContent = "Could not load tutor details.";
+    return;
+  }
+
+  const requestMap = new Map((requests || []).map(item => [item.id, item]));
+  const tutorMap = new Map((tutors || []).map(item => [item.id, item]));
+
+  list.replaceChildren();
+
+  conversations.forEach(conversation => {
+    const request = requestMap.get(conversation.request_id);
+    if (!request) return;
+
+    const isStudent = request.student_id === user.id;
+    const tutor = tutorMap.get(request.tutor_id);
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "conversation-item";
+    button.style.cssText =
+      "display:block;width:100%;text-align:left;padding:14px;margin:8px 0;border:1px solid var(--border);border-radius:10px;background:var(--surface);cursor:pointer;";
+
+    const subject = document.createElement("strong");
+    subject.textContent = request.subject || "Tutoring session";
+
+    const participant = document.createElement("span");
+    participant.style.display = "block";
+    participant.textContent = isStudent
+      ? `Tutor: ${tutor?.display_name || "Your tutor"}`
+      : "Student conversation";
+
+    button.append(subject, participant);
+
+    button.addEventListener("click", () => {
+      activeTutorConversationId = conversation.id;
+      document.getElementById("tutorMessageHeading").textContent =
+        request.subject || "Tutoring conversation";
+      messagePanel.hidden = false;
+     loadTutorMessages();
+      document.getElementById("tutorMessageInput").focus();
+    });
+
+    list.appendChild(button);
+  });
+
+  if (!list.children.length) {
+    list.textContent = "No conversations are available for this account.";
+  }
+}
+
+async function loadTutorMessages() {
+  const messagesList = document.getElementById("tutorMessagesList");
+  messagesList.textContent = "Loading messages...";
+
+  if (!activeTutorConversationId) {
+    messagesList.textContent = "Select a conversation first.";
+    return;
+  }
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    messagesList.textContent = "Please sign in again.";
+    return;
+  }
+
+  const { data: messages, error } = await supabaseClient
+    .from("tutor_messages")
+    .select("id, sender_id, message, created_at")
+    .eq("conversation_id", activeTutorConversationId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Message loading error:", error);
+    messagesList.textContent = "Could not load messages.";
+    return;
+  }
+
+  messagesList.replaceChildren();
+
+  if (!messages?.length) {
+    messagesList.textContent =
+      "No messages yet. Send the first message!";
+    return;
+  }
+
+  messages.forEach(item => {
+    const bubble = document.createElement("div");
+    const ownMessage = item.sender_id === user.id;
+
+    bubble.style.cssText = `
+      max-width:80%;
+      width:fit-content;
+      padding:10px 14px;
+      margin:10px 0;
+      border-radius:12px;
+      ${ownMessage ? "margin-left:auto;background:var(--primary);color:white;" : "margin-right:auto;background:var(--surface);border:1px solid var(--border);"}
+    `;
+
+    const messageText = document.createElement("p");
+    messageText.textContent = item.message;
+    messageText.style.margin = "0";
+
+    const timestamp = document.createElement("small");
+    timestamp.textContent = new Date(item.created_at).toLocaleString();
+
+    bubble.append(messageText, timestamp);
+    messagesList.appendChild(bubble);
+  });
+
+  messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+const tutorMessageForm = document.getElementById("tutorMessageForm");
+
+if (tutorMessageForm) {
+  tutorMessageForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const input = document.getElementById("tutorMessageInput");
+    const status = document.getElementById("tutorMessageStatus");
+    const message = input.value.trim();
+
+    if (!activeTutorConversationId || !message) {
+      status.textContent = "Select a conversation and enter a message.";
+      return;
+    }
+
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    const user = authData?.user;
+
+    if (authError || !user) {
+      status.textContent = "Please sign in again.";
+      return;
+    }
+
+    status.textContent = "Sending message...";
+
+    const { error } = await supabaseClient
+      .from("tutor_messages")
+      .insert({
+        conversation_id: activeTutorConversationId,
+        sender_id: user.id,
+        message
+      });
+
+    if (error) {
+      console.error("Message sending error:", error);
+      status.textContent = "Message could not be sent. Please try again.";
+      return;
+    }
+
+    input.value = "";
+    status.textContent = "Message sent successfully.";
+
+    await loadTutorMessages();
+  });
 }
 
 function openDialog(task = null) {
