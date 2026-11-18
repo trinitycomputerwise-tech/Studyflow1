@@ -1338,6 +1338,36 @@ function subscribeToTutorMessages(conversationId) {
     )
     .subscribe();
 }
+const enableMessageNotifications =
+  document.getElementById("enableMessageNotifications");
+
+if (enableMessageNotifications) {
+  enableMessageNotifications.addEventListener("click", async () => {
+    try {
+      if (!("Notification" in window)) {
+        enableMessageNotifications.textContent =
+          "Notifications Not Supported";
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+
+      if (permission === "granted") {
+        enableMessageNotifications.textContent =
+          "Notifications Enabled";
+
+        new Notification("StudyFlow Notifications Enabled", {
+          body: "You can now receive new message alerts."
+        });
+      } else {
+        enableMessageNotifications.textContent =
+          "Notifications Not Enabled";
+      }
+    } catch (error) {
+      console.error("Message notification error:", error);
+    }
+  });
+}
 function openDialog(task = null) {
   $("#assignmentForm").reset();
   $("#assignmentId").value = task?.id || "";
