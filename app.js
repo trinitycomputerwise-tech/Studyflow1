@@ -4341,7 +4341,69 @@ if (refreshPayoutReportsButton) {
 
   loadAdminPayoutReports();
 }
+const downloadPayoutReportButton =
+  document.getElementById("downloadPayoutReport");
 
+if (downloadPayoutReportButton) {
+  downloadPayoutReportButton.addEventListener("click", async () => {
+    downloadPayoutReportButton.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient.rpc(
+        "admin_get_payout_report"
+      );
+
+      if (error) throw error;
+
+      const report = Array.isArray(data) ? data[0] : data;
+
+      if (!report) {
+        throw new Error("No financial report data was returned.");
+      }
+
+      const rows = [
+        ["StudyFlow Financial Report"],
+        ["Generated", new Date().toLocaleString("en-NG")],
+        [],
+        ["Financial Category", "Amount (NGN)"],
+        ["Total Tutoring Payments", report.tutoring_payments_total],
+        ["Total Material Sales", report.material_sales_total],
+        ["StudyFlow Commissions", report.studyflow_commissions_total],
+        ["Total Tutor Earnings", report.tutor_earnings_total],
+        ["Total Payouts Paid", report.total_payouts_paid],
+        ["Outstanding Tutor Earnings", report.outstanding_tutor_earnings]
+      ];
+
+      const csv = rows.map(row =>
+        row.map(value =>
+          `"${String(value ?? "").replace(/"/g, '""')}"`
+        ).join(",")
+      ).join("\r\n");
+
+      const blob = new Blob(["\uFEFF" + csv], {
+        type: "text/csv;charset=utf-8;"
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = "StudyFlow-Financial-Report.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(downloadUrl);
+
+      alert("Financial report downloaded successfully!");
+    } catch (error) {
+      console.error("Financial report download error:", error);
+      alert("Could not download report: " + error.message);
+    } finally {
+      downloadPayoutReportButton.disabled = false;
+    }
+  });
+}
 window.shareStudyFlowTutoring = async function (platform) {
   const shareUrl = window.location.origin + window.location.pathname;
   const shareText =
