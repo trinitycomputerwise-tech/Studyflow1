@@ -4404,6 +4404,93 @@ if (downloadPayoutReportButton) {
     }
   });
 }
+const downloadDetailedTransactionsButton =
+  document.getElementById("downloadDetailedTransactions");
+
+if (downloadDetailedTransactionsButton) {
+  downloadDetailedTransactionsButton.addEventListener("click", async () => {
+    downloadDetailedTransactionsButton.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient.rpc(
+        "admin_get_detailed_transactions"
+      );
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        throw new Error("No transaction records were found.");
+      }
+
+      const headers = [
+        "Transaction Type",
+        "Transaction ID",
+        "Transaction Date",
+        "Tutor Name",
+        "Description",
+        "Student ID",
+        "Amount (NGN)",
+        "Commission (NGN)",
+        "Tutor Earnings (NGN)",
+        "Payment Reference",
+        "Payment Status",
+        "Payout Status",
+        "Payout Reference",
+        "Paid At",
+        "Payment Mode"
+      ];
+
+      const rows = data.map(item => [
+        item.transaction_type,
+        item.transaction_id,
+        item.transaction_date,
+        item.tutor_name,
+        item.description,
+        item.student_id,
+        item.amount_ngn,
+        item.commission_ngn,
+        item.tutor_earning_ngn,
+        item.payment_reference,
+        item.payment_status,
+        item.payout_status,
+        item.payout_reference,
+        item.paid_at,
+        item.payment_mode
+      ]);
+
+      const csv = [headers, ...rows]
+        .map(row =>
+          row.map(value =>
+            `"${String(value ?? "").replace(/"/g, '""')}"`
+          ).join(",")
+        )
+        .join("\r\n");
+
+      const blob = new Blob(["\uFEFF" + csv], {
+        type: "text/csv;charset=utf-8;"
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = downloadUrl;
+      link.download = "StudyFlow-Detailed-Transactions.csv";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(downloadUrl);
+
+      alert("Detailed transaction report downloaded successfully!");
+    } catch (error) {
+      console.error("Detailed transaction export error:", error);
+      alert("Could not download transactions: " + error.message);
+    } finally {
+      downloadDetailedTransactionsButton.disabled = false;
+    }
+  });
+}
 window.shareStudyFlowTutoring = async function (platform) {
   const shareUrl = window.location.origin + window.location.pathname;
   const shareText =
