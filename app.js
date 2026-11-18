@@ -1252,12 +1252,7 @@ if (readError) {
   messages.forEach(item => {
     const bubble = document.createElement("div");
     const ownMessage = item.sender_id === user.id;
-    console.log("READ RECEIPT CHECK:", {
-      sender_id: item.sender_id,
-      current_user_id: user.id,
-      read_at: item.read_at,
-      ownMessage
-    });
+    
 
     bubble.style.cssText = `
       max-width:80%;
