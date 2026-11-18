@@ -1142,6 +1142,7 @@ async function loadTutorConversations() {
 
     button.addEventListener("click", () => {
       activeTutorConversationId = conversation.id;
+      subscribeToTutorMessages(conversation.id);
       document.getElementById("tutorMessageHeading").textContent =
         request.subject || "Tutoring conversation";
       messagePanel.hidden = false;
@@ -1220,7 +1221,30 @@ async function loadTutorMessages() {
 
   messagesList.scrollTop = messagesList.scrollHeight;
 }
+let tutorMessagesChannel = null;
 
+function subscribeToTutorMessages(conversationId) {
+  if (tutorMessagesChannel) {
+    supabaseClient.removeChannel(tutorMessagesChannel);
+    tutorMessagesChannel = null;
+  }
+
+  tutorMessagesChannel = supabaseClient
+    .channel(`tutor-messages-${conversationId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tutor_messages",
+        filter: `conversation_id=eq.${conversationId}`
+      },
+      () => {
+        loadTutorMessages();
+      }
+    )
+    .subscribe();
+}
 const tutorMessageForm = document.getElementById("tutorMessageForm");
 
 if (tutorMessageForm) {
