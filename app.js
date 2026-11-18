@@ -1296,7 +1296,38 @@ function subscribeToTutorMessages(conversationId) {
     .on(
       "postgres_changes",
       {
-        event: "*",
+        event: "INSERT",
+        schema: "public",
+        table: "tutor_messages",
+        filter: `conversation_id=eq.${conversationId}`
+      },
+      async (payload) => {
+        await loadTutorMessages();
+        await updateUnreadMessageCount();
+
+        const { data: authData } =
+          await supabaseClient.auth.getUser();
+
+        const user = authData?.user;
+        const newMessage = payload.new;
+
+        if (
+          user &&
+          newMessage.sender_id !== user.id &&
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          new Notification("New StudyFlow Message", {
+            body: newMessage.message,
+            icon: "/favicon.ico"
+          });
+        }
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
         schema: "public",
         table: "tutor_messages",
         filter: `conversation_id=eq.${conversationId}`
@@ -1307,55 +1338,6 @@ function subscribeToTutorMessages(conversationId) {
     )
     .subscribe();
 }
-const tutorMessageForm = document.getElementById("tutorMessageForm");
-
-if (tutorMessageForm) {
-  tutorMessageForm.addEventListener("submit", async event => {
-    event.preventDefault();
-
-    const input = document.getElementById("tutorMessageInput");
-    const status = document.getElementById("tutorMessageStatus");
-    const message = input.value.trim();
-
-    if (!activeTutorConversationId || !message) {
-      status.textContent = "Select a conversation and enter a message.";
-      return;
-    }
-
-    const { data: authData, error: authError } =
-      await supabaseClient.auth.getUser();
-
-    const user = authData?.user;
-
-    if (authError || !user) {
-      status.textContent = "Please sign in again.";
-      return;
-    }
-
-    status.textContent = "Sending message...";
-
-    const { error } = await supabaseClient
-      .from("tutor_messages")
-      .insert({
-        conversation_id: activeTutorConversationId,
-        sender_id: user.id,
-        message
-      });
-
-    if (error) {
-      console.error("Message sending error:", error);
-      status.textContent = "Message could not be sent. Please try again.";
-      return;
-    }
-
-    input.value = "";
-    status.textContent = "Message sent successfully.";
-
-    await loadTutorMessages();
-    await updateUnreadMessageCount();
-  });
-}
-
 function openDialog(task = null) {
   $("#assignmentForm").reset();
   $("#assignmentId").value = task?.id || "";
