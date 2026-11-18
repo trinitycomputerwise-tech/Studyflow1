@@ -1045,13 +1045,55 @@ async function setView(view) {
   if (view === "payouts") loadTutorPayoutRequests();
   if (view === "quizzes") loadQuizzes();
   if (view === "quizzes") loadManagedQuizResults();
-  if (view === "messages") loadTutorConversations();
+ if (view === "messages") {
+  loadTutorConversations();
+  updateUnreadMessageCount();
+}
 
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
 let activeTutorConversationId = null;
+async function updateUnreadMessageCount() {
+  const countBadge = document.getElementById("unreadMessageCount");
+  if (!countBadge) return;
 
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    countBadge.hidden = true;
+    return;
+  }
+
+  const { data: conversations, error: conversationError } =
+    await supabaseClient
+      .from("tutor_conversations")
+      .select("id");
+
+  if (conversationError || !conversations?.length) {
+    countBadge.hidden = true;
+    return;
+  }
+
+  const conversationIds = conversations.map(item => item.id);
+
+  const { count, error } = await supabaseClient
+    .from("tutor_messages")
+    .select("id", { count: "exact", head: true })
+    .in("conversation_id", conversationIds)
+    .neq("sender_id", user.id)
+    .is("read_at", null);
+
+  if (error) {
+    console.error("Unread message count error:", error);
+    return;
+  }
+
+  const unread = count || 0;
+  countBadge.textContent = unread;
+  countBadge.hidden = unread === 0;
+}
 async function loadTutorConversations() {
   const list = document.getElementById("tutorConversationList");
   const messagePanel = document.getElementById("tutorMessagePanel");
@@ -1174,10 +1216,22 @@ async function loadTutorMessages() {
     messagesList.textContent = "Please sign in again.";
     return;
   }
+  const { error: readError } = await supabaseClient.rpc(
+  "mark_tutor_conversation_read",
+  {
+    p_conversation_id: activeTutorConversationId
+  }
+);
+
+if (readError) {
+  console.error("Could not mark messages as read:", readError);
+} else {
+  await updateUnreadMessageCount();
+}
 
   const { data: messages, error } = await supabaseClient
     .from("tutor_messages")
-    .select("id, sender_id, message, created_at")
+    .select("id, sender_id, message, created_at, read_at")
     .eq("conversation_id", activeTutorConversationId)
     .order("created_at", { ascending: true });
 
@@ -1215,9 +1269,16 @@ async function loadTutorMessages() {
     const timestamp = document.createElement("small");
     timestamp.textContent = new Date(item.created_at).toLocaleString();
 
-    bubble.append(messageText, timestamp);
-    messagesList.appendChild(bubble);
-  });
+    if (ownMessage && item.read_at) {
+      const readReceipt = document.createElement("small");
+      readReceipt.textContent = " · Seen";
+      readReceipt.style.marginLeft = "6px";
+      bubble.append(messageText, timestamp, readReceipt);
+    } else {
+      bubble.append(messageText, timestamp);
+    }
+        messagesList.appendChild(bubble);
+      });
 
   messagesList.scrollTop = messagesList.scrollHeight;
 }
@@ -1290,6 +1351,7 @@ if (tutorMessageForm) {
     status.textContent = "Message sent successfully.";
 
     await loadTutorMessages();
+    await updateUnreadMessageCount();
   });
 }
 
