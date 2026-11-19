@@ -2828,7 +2828,26 @@ function renderStudyMaterials(materials) {
       </div>
     `;
   }).join("");
-  
+    const previousButton = document.getElementById("materialsPrevious");
+  const nextButton = document.getElementById("materialsNext");
+
+  if (previousButton) {
+    previousButton.onclick = async function () {
+      if (currentMaterialsPage > 1) {
+        currentMaterialsPage--;
+        await loadStudyMaterials();
+      }
+    };
+  }
+
+  if (nextButton) {
+    nextButton.onclick = async function () {
+      if (currentMaterialsPage < totalPages) {
+        currentMaterialsPage++;
+        await loadStudyMaterials();
+      }
+    };
+  }
   list.onclick = async function (event) {
     const button = event.target.closest("[data-share-material]");
     if (!button) return;
