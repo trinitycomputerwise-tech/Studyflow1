@@ -237,7 +237,8 @@ async function loadAssignmentsFromSupabase() {
 renderAll();
 checkAssignmentNotifications();
 }
-
+let currentTutorsPage = 1;
+const tutorsPerPage = 10;
 async function loadTutoringData() {
   const message = document.getElementById("tutorProfileMessage");
   const directory = document.getElementById("tutorDirectory");
@@ -264,9 +265,24 @@ async function loadTutoringData() {
   } else if (!tutors || tutors.length === 0) {
     directory.textContent = "No tutor profiles yet. Be the first to register!";
   } else {
+    const totalTutorPages = Math.max(
+  1,
+  Math.ceil(tutors.length / tutorsPerPage)
+);
+
+if (currentTutorsPage > totalTutorPages) {
+  currentTutorsPage = totalTutorPages;
+}
+
+const startIndex = (currentTutorsPage - 1) * tutorsPerPage;
+
+const paginatedTutors = tutors.slice(
+  startIndex,
+  startIndex + tutorsPerPage
+);
     directory.replaceChildren();
 
-    tutors.forEach(tutor => {
+    paginatedTutors.forEach(tutor => {
       const card = document.createElement("article");
       card.className = "panel";
 
@@ -427,6 +443,34 @@ card.append(
 
       directory.append(card);
     });
+    const tutorPrevious = document.getElementById("tutorPrevious");
+const tutorNext = document.getElementById("tutorNext");
+const tutorPageInfo = document.getElementById("tutorPageInfo");
+
+if (tutorPageInfo) {
+  tutorPageInfo.textContent =
+    `Page ${currentTutorsPage} of ${totalTutorPages}`;
+}
+
+if (tutorPrevious) {
+  tutorPrevious.disabled = currentTutorsPage <= 1;
+  tutorPrevious.onclick = async function () {
+    if (currentTutorsPage > 1) {
+      currentTutorsPage--;
+      await loadTutoringData();
+    }
+  };
+}
+
+if (tutorNext) {
+  tutorNext.disabled = currentTutorsPage >= totalTutorPages;
+  tutorNext.onclick = async function () {
+    if (currentTutorsPage < totalTutorPages) {
+      currentTutorsPage++;
+      await loadTutoringData();
+    }
+  };
+}
   }
 
   const { data: ownProfile, error: ownProfileError } = await supabaseClient
