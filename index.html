@@ -627,6 +627,11 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
           <div id="tutorDirectory" class="content-grid">
             <p class="muted">Tutor profiles will appear here.</p>
           </div>
+          <div id="tutorPagination" style="margin-top: 20px; display: flex; gap: 10px; align-items: center;">
+            <button id="tutorPrevious" class="secondary-button" type="button">Previous</button>
+            <span id="tutorPageInfo">Page 1</span>
+            <button id="tutorNext" class="secondary-button" type="button">Next</button>
+          </div>
         </section>
 
         <section class="panel">
@@ -1634,7 +1639,7 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
         <div class="form-row"><label>Subject <input id="subjectInput" required maxlength="50" placeholder="e.g. Computer Science" list="subjectOptions"></label><datalist id="subjectOptions"><option value="Mathematics"><option value="Computer Science"><option value="English"><option value="Physics"><option value="Biology"><option value="History"></datalist><label>Due date <input id="dueInput" type="date" required></label></div>
         <div class="form-row"><label>Priority <select id="priorityInput"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select></label><label>Status <select id="statusInput"><option value="Pending">Pending</option><option value="Completed">Completed</option></select></label></div>
         <label>Notes <textarea id="notesInput" rows="3" maxlength="500" placeholder="Add a note or the next step (optional)"></textarea></label>
-        <div class="dialog-actions"><button type="button" class="secondary-button" id="cancelDialog">Cancel</button><button type="submit" class="primary-button">Save assignment</button></div>
+        <div class="dialog-actions"><button type="button" class="secondary-btn" id="cancelDialog">Cancel</button><button type="submit" class="primary-button">Save assignment</button></div>
       </form>
     </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
