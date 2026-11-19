@@ -1184,7 +1184,7 @@ async function loadTutorConversations() {
 
     button.addEventListener("click", () => {
       activeTutorConversationId = conversation.id;
-      subscribeToTutorMessages(conversation.id);
+      subscribeToTutorMessages();
       document.getElementById("tutorMessageHeading").textContent =
         request.subject || "Tutoring conversation";
       messagePanel.hidden = false;
@@ -1285,31 +1285,37 @@ if (readError) {
 }
 let tutorMessagesChannel = null;
 
-function subscribeToTutorMessages(conversationId) {
+
+function subscribeToTutorMessages() {
   if (tutorMessagesChannel) {
     supabaseClient.removeChannel(tutorMessagesChannel);
     tutorMessagesChannel = null;
   }
 
   tutorMessagesChannel = supabaseClient
-    .channel(`tutor-messages-${conversationId}`)
+    .channel("tutor-messages-all-conversations")
     .on(
       "postgres_changes",
       {
         event: "INSERT",
         schema: "public",
-        table: "tutor_messages",
-        filter: `conversation_id=eq.${conversationId}`
+        table: "tutor_messages"
       },
       async (payload) => {
-        await loadTutorMessages();
+        const newMessage = payload.new;
+
         await updateUnreadMessageCount();
+
+        if (
+          activeTutorConversationId === newMessage.conversation_id
+        ) {
+          await loadTutorMessages();
+        }
 
         const { data: authData } =
           await supabaseClient.auth.getUser();
 
         const user = authData?.user;
-        const newMessage = payload.new;
 
         if (
           user &&
@@ -1329,15 +1335,19 @@ function subscribeToTutorMessages(conversationId) {
       {
         event: "UPDATE",
         schema: "public",
-        table: "tutor_messages",
-        filter: `conversation_id=eq.${conversationId}`
+        table: "tutor_messages"
       },
-      () => {
-        loadTutorMessages();
+      (payload) => {
+        if (
+          activeTutorConversationId === payload.new.conversation_id
+        ) {
+          loadTutorMessages();
+        }
       }
     )
     .subscribe();
 }
+
 const enableMessageNotifications =
   document.getElementById("enableMessageNotifications");
 
