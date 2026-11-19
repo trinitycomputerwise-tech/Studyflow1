@@ -2335,7 +2335,8 @@ async function loadStudyMaterials() {
   renderStudyMaterials(materials || []);
 }
 
-
+let currentPayoutsPage = 1;
+const payoutsPerPage = 10;
 async function loadTutorPayouts() {
   const list = document.getElementById("payoutsList");
   if (!list) return;
@@ -2436,12 +2437,30 @@ async function loadTutorPayouts() {
     `).join("");
   }
 
-  html += "<h2 style='margin-top:25px;'>Prepared tutor payouts</h2>";
+ html += "<h2 style='margin-top:25px;'>Prepared tutor payouts</h2>";
 
-  if (!payouts || payouts.length === 0) {
-    html += "<p>No tutor payouts available yet.</p>";
-  } else {
-    html += payouts.map(payout => `
+let totalPayoutPages = 1;
+
+if (!payouts || payouts.length === 0) {
+  html += "<p>No tutor payouts available yet.</p>";
+} else {
+  totalPayoutPages = Math.max(
+    1,
+    Math.ceil(payouts.length / payoutsPerPage)
+  );
+
+  if (currentPayoutsPage > totalPayoutPages) {
+    currentPayoutsPage = totalPayoutPages;
+  }
+
+  const startIndex = (currentPayoutsPage - 1) * payoutsPerPage;
+
+  const paginatedPayouts = payouts.slice(
+    startIndex,
+    startIndex + payoutsPerPage
+  );
+
+  html += paginatedPayouts.map(payout => `
       <div class="panel" style="margin-top:12px;">
         <p><strong>Tutor ID:</strong> ${escapeHtml(payout.tutor_id)}</p>
         <p><strong>Student payment:</strong> ₦${Number(payout.student_payment_ngn).toLocaleString("en-NG")}</p>
@@ -2457,6 +2476,34 @@ async function loadTutorPayouts() {
     `).join("");
   }
 
+  const payoutsPrevious = document.getElementById("payoutsPrevious");
+const payoutsNext = document.getElementById("payoutsNext");
+const payoutsPageInfo = document.getElementById("payoutsPageInfo");
+
+if (payoutsPageInfo) {
+  payoutsPageInfo.textContent =
+    `Page ${currentPayoutsPage} of ${totalPayoutPages}`;
+}
+
+if (payoutsPrevious) {
+  payoutsPrevious.disabled = currentPayoutsPage <= 1;
+  payoutsPrevious.onclick = async function () {
+    if (currentPayoutsPage > 1) {
+      currentPayoutsPage--;
+      await loadTutorPayouts();
+    }
+  };
+}
+
+if (payoutsNext) {
+  payoutsNext.disabled = currentPayoutsPage >= totalPayoutPages;
+  payoutsNext.onclick = async function () {
+    if (currentPayoutsPage < totalPayoutPages) {
+      currentPayoutsPage++;
+      await loadTutorPayouts();
+    }
+  };
+}
   list.innerHTML = html;
   list.querySelectorAll("[data-mark-paid]").forEach(button => {
   button.addEventListener("click", async () => {
