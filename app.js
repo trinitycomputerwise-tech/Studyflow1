@@ -3895,6 +3895,8 @@ document.getElementById("quizzesList")?.addEventListener(
   }
 );
 // Load a student's previous quiz results
+let currentQuizResultsPage = 1;
+const quizResultsPerPage = 10;
 async function loadQuizResults() {
   const list = document.getElementById("quizResultsList");
   if (!list) return;
@@ -3913,6 +3915,22 @@ async function loadQuizResults() {
     list.innerHTML = "<p>No quiz attempts yet.</p>";
     return;
   }
+  const totalQuizResultsPages = Math.max(
+  1,
+  Math.ceil(attempts.length / quizResultsPerPage)
+);
+
+if (currentQuizResultsPage > totalQuizResultsPages) {
+  currentQuizResultsPage = totalQuizResultsPages;
+}
+
+const startIndex =
+  (currentQuizResultsPage - 1) * quizResultsPerPage;
+
+const paginatedAttempts = attempts.slice(
+  startIndex,
+  startIndex + quizResultsPerPage
+);
 
   const quizIds = [...new Set(attempts.map(item => item.quiz_id))];
 
@@ -3926,13 +3944,43 @@ async function loadQuizResults() {
     titles[quiz.id] = quiz.title;
   });
 
-  list.innerHTML = attempts.map(attempt => `
+  list.innerHTML = paginatedAttempts.map(attempt => `
     <div class="panel" style="margin-top:10px;">
       <h3>${escapeHtml(titles[attempt.quiz_id] || "Quiz")}</h3>
       <p>Score: ${attempt.score} / ${attempt.total_questions}</p>
       <p>Date: ${new Date(attempt.submitted_at).toLocaleString()}</p>
     </div>
   `).join("");
+  const quizResultsPrevious = document.getElementById("quizResultsPrevious");
+const quizResultsNext = document.getElementById("quizResultsNext");
+const quizResultsPageInfo = document.getElementById("quizResultsPageInfo");
+
+if (quizResultsPageInfo) {
+  quizResultsPageInfo.textContent =
+    `Page ${currentQuizResultsPage} of ${totalQuizResultsPages}`;
+}
+
+if (quizResultsPrevious) {
+  quizResultsPrevious.disabled = currentQuizResultsPage <= 1;
+  quizResultsPrevious.onclick = async function () {
+    if (currentQuizResultsPage > 1) {
+      currentQuizResultsPage--;
+      await loadQuizResults();
+    }
+  };
+}
+
+if (quizResultsNext) {
+  quizResultsNext.disabled =
+    currentQuizResultsPage >= totalQuizResultsPages;
+
+  quizResultsNext.onclick = async function () {
+    if (currentQuizResultsPage < totalQuizResultsPages) {
+      currentQuizResultsPage++;
+      await loadQuizResults();
+    }
+  };
+}
 }
 
 // Load results for quizzes managed by the current admin or tutor
