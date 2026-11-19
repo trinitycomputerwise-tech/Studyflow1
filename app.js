@@ -3336,7 +3336,8 @@ function addQuizQuestion() {
 
   builder.appendChild(question);
 }
-
+let currentQuizzesPage = 1;
+const quizzesPerPage = 10;
 async function loadQuizzes() {
   const list = document.getElementById("quizzesList");
   if (!list) return;
@@ -3379,7 +3380,22 @@ async function loadQuizzes() {
   if (!quizzes?.length) {
     list.innerHTML = '<p class="muted">No published quizzes available yet.</p>';
   } else {
-    list.innerHTML = quizzes.map(quiz => {
+    const totalQuizPages = Math.max(
+  1,
+  Math.ceil(quizzes.length / quizzesPerPage)
+);
+
+if (currentQuizzesPage > totalQuizPages) {
+  currentQuizzesPage = totalQuizPages;
+}
+
+const startIndex = (currentQuizzesPage - 1) * quizzesPerPage;
+
+const paginatedQuizzes = quizzes.slice(
+  startIndex,
+  startIndex + quizzesPerPage
+);
+    list.innerHTML = paginatedQuizzes.map(quiz => {
       const canEdit = canManage &&
         (isAdmin || quiz.created_by === user.id);
 
@@ -3412,6 +3428,34 @@ async function loadQuizzes() {
         </div>
       `;
     }).join("");
+        const quizzesPrevious = document.getElementById("quizzesPrevious");
+    const quizzesNext = document.getElementById("quizzesNext");
+    const quizzesPageInfo = document.getElementById("quizzesPageInfo");
+
+    if (quizzesPageInfo) {
+      quizzesPageInfo.textContent =
+        `Page ${currentQuizzesPage} of ${totalQuizPages}`;
+    }
+
+    if (quizzesPrevious) {
+      quizzesPrevious.disabled = currentQuizzesPage <= 1;
+      quizzesPrevious.onclick = async function () {
+        if (currentQuizzesPage > 1) {
+          currentQuizzesPage--;
+          await loadQuizzes();
+        }
+      };
+    }
+
+    if (quizzesNext) {
+      quizzesNext.disabled = currentQuizzesPage >= totalQuizPages;
+      quizzesNext.onclick = async function () {
+        if (currentQuizzesPage < totalQuizPages) {
+          currentQuizzesPage++;
+          await loadQuizzes();
+        }
+      };
+    }
   }
 
   const builder = document.getElementById("quizQuestionBuilder");
