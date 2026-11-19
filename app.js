@@ -239,6 +239,8 @@ checkAssignmentNotifications();
 }
 let currentTutorsPage = 1;
 const tutorsPerPage = 10;
+let currentTutoringRequestsPage = 1;
+const tutoringRequestsPerPage = 10;
 async function loadTutoringData() {
   const message = document.getElementById("tutorProfileMessage");
   const directory = document.getElementById("tutorDirectory");
@@ -506,6 +508,22 @@ if (tutorNext) {
     requests.textContent = "No tutoring requests yet.";
     return;
   }
+  const totalTutoringRequestsPages = Math.max(
+  1,
+  Math.ceil(ownRequests.length / tutoringRequestsPerPage)
+);
+
+if (currentTutoringRequestsPage > totalTutoringRequestsPages) {
+  currentTutoringRequestsPage = totalTutoringRequestsPages;
+}
+
+const requestStartIndex =
+  (currentTutoringRequestsPage - 1) * tutoringRequestsPerPage;
+
+const paginatedRequests = ownRequests.slice(
+  requestStartIndex,
+  requestStartIndex + tutoringRequestsPerPage
+);
 
   const requestIds = ownRequests.map(request => request.id);
 
@@ -528,7 +546,7 @@ const paymentsByRequest = {};
   }
 });
 
-  ownRequests.forEach(request => {
+ paginatedRequests.forEach(request => {
     const item = document.createElement("article");
     item.className = "panel";
 
@@ -646,6 +664,37 @@ const paymentsByRequest = {};
 
 requests.append(item);
   });
+  const requestsPrevious = document.getElementById("tutoringRequestsPrevious");
+const requestsNext = document.getElementById("tutoringRequestsNext");
+const requestsPageInfo = document.getElementById("tutoringRequestsPageInfo");
+
+if (requestsPageInfo) {
+  requestsPageInfo.textContent =
+    `Page ${currentTutoringRequestsPage} of ${totalTutoringRequestsPages}`;
+}
+
+if (requestsPrevious) {
+  requestsPrevious.disabled = currentTutoringRequestsPage <= 1;
+
+  requestsPrevious.onclick = async function () {
+    if (currentTutoringRequestsPage > 1) {
+      currentTutoringRequestsPage--;
+      await loadTutoringData();
+    }
+  };
+}
+
+if (requestsNext) {
+  requestsNext.disabled =
+    currentTutoringRequestsPage >= totalTutoringRequestsPages;
+
+  requestsNext.onclick = async function () {
+    if (currentTutoringRequestsPage < totalTutoringRequestsPages) {
+      currentTutoringRequestsPage++;
+      await loadTutoringData();
+    }
+  };
+}
 }
 
 const tutorProfileForm = document.getElementById("tutorProfileForm");
