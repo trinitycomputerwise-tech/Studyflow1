@@ -5655,3 +5655,83 @@ async function loadAdminCourses() {
     list.append(card);
   });
 }
+
+async function loadMyCourses() {
+  const list = document.getElementById("myCoursesList");
+
+  if (!list) return;
+
+  list.textContent = "Loading your courses...";
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !authData?.user) {
+    list.textContent = "Please sign in to view your courses.";
+    return;
+  }
+
+  const { data: enrollments, error } = await supabaseClient
+    .from("course_enrollments")
+    .select(`
+      id,
+      course_id,
+      amount_paid_ngn,
+      paid_at,
+      courses (
+        id,
+        title,
+        description,
+        category,
+        level
+      )
+    `)
+    .eq("student_id", authData.user.id)
+    .eq("payment_status", "paid")
+    .order("paid_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "Could not load your courses: " + error.message;
+    return;
+  }
+
+  list.replaceChildren();
+
+  if (!enrollments || enrollments.length === 0) {
+    list.textContent = "You have not enrolled in any courses yet.";
+    return;
+  }
+
+  enrollments.forEach(enrollment => {
+    const course = enrollment.courses;
+
+    if (!course) return;
+
+    const card = document.createElement("article");
+    card.className = "panel";
+
+    const title = document.createElement("h3");
+    title.textContent = course.title;
+
+    const description = document.createElement("p");
+    description.textContent =
+      course.description || "No course description provided.";
+
+    const details = document.createElement("p");
+    details.textContent =
+      "Category: " + (course.category || "General") +
+      " | Level: " + (course.level || "Not specified");
+
+    const openButton = document.createElement("button");
+    openButton.type = "button";
+    openButton.className = "primary-button";
+    openButton.textContent = "Open Course";
+
+    openButton.addEventListener("click", () => {
+      openStudyCourse(course.id);
+    });
+
+    card.append(title, description, details, openButton);
+    list.append(card);
+  });
+}
