@@ -5240,3 +5240,44 @@ if (tutorMessageForm) {
     await updateUnreadMessageCount();
   });
 }
+
+
+async function purchaseCourse(courseId) {
+  try {
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    if (authError || !authData.user) {
+      alert("Please sign in before purchasing this course.");
+      return;
+    }
+
+    const { data: paymentData, error: paymentError } =
+      await supabaseClient.functions.invoke("Paystack-Payment", {
+        body: {
+          action: "initialize_course",
+          courseId
+        }
+      });
+
+    if (paymentError || !paymentData?.authorization_url) {
+      alert(
+        paymentData?.error ||
+        paymentError?.message ||
+        "Could not start course payment. Please try again."
+      );
+      return;
+    }
+
+    localStorage.setItem(
+      "studyflow.pendingCoursePurchase",
+      paymentData.reference
+    );
+
+    window.location.assign(paymentData.authorization_url);
+
+  } catch (error) {
+    console.error("Course payment error:", error);
+    alert("Something went wrong while starting course payment.");
+  }
+}
