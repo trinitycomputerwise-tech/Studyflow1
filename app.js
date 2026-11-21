@@ -5384,3 +5384,75 @@ async function loadStudyCourses() {
     catalogue.append(card);
   });
 }
+
+const courseCreateForm = document.getElementById("courseCreateForm");
+
+if (courseCreateForm) {
+  courseCreateForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const message = document.getElementById("courseCreateMessage");
+    const submitButton = courseCreateForm.querySelector('button[type="submit"]');
+
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    if (authError || !authData.user) {
+      message.textContent = "Please sign in before creating a course.";
+      return;
+    }
+
+    const { data: roles, error: roleError } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", authData.user.id);
+
+    if (roleError || !roles?.some(item =>
+      ["admin", "tutor"].includes(item.role)
+    )) {
+      message.textContent = "Only admins and registered tutors can create courses.";
+      return;
+    }
+
+    const title = document.getElementById("courseTitle").value.trim();
+    const description = document.getElementById("courseDescription").value.trim();
+    const category = document.getElementById("courseCategory").value.trim();
+    const level = document.getElementById("courseLevel").value;
+    const price = Number(document.getElementById("coursePrice").value);
+
+    if (!title || !description || !category || !level ||
+        !Number.isInteger(price) || price < 0) {
+      message.textContent = "Please complete all course fields correctly.";
+      return;
+    }
+
+    submitButton.disabled = true;
+    message.textContent = "Submitting course for approval...";
+
+    const { error } = await supabaseClient
+      .from("courses")
+      .insert({
+        creator_id: authData.user.id,
+        title,
+        description,
+        category,
+        level,
+        price_ngn: price,
+        status: "pending_approval"
+      });
+
+    submitButton.disabled = false;
+
+    if (error) {
+      console.error("Course creation error:", error);
+      message.textContent = "Course submission failed: " + error.message;
+      return;
+    }
+
+    courseCreateForm.reset();
+    message.textContent =
+      "Course submitted successfully. An administrator must approve it before students can enrol.";
+
+    await loadStudyCourses();
+  });
+}
