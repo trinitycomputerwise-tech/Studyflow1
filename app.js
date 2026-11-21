@@ -4451,6 +4451,41 @@ async function loadManagedQuizAttemptDetails(attemptId) {
       return;
     }
 
+    // StudyFlow course payment verification.
+if (reference.startsWith("studyflow_course_")) {
+  const { data, error } = await supabaseClient.functions.invoke(
+    "Paystack-Payment",
+    {
+      body: {
+        action: "verify_course",
+        reference: reference
+      }
+    }
+  );
+
+  if (error || !data?.success || !data?.course_id) {
+    alert(
+      data?.error ||
+      data?.message ||
+      error?.message ||
+      "Course payment verification failed. Please contact StudyFlow support."
+    );
+    return;
+  }
+
+  localStorage.removeItem("studyflow.pendingCoursePurchase");
+
+  window.history.replaceState(
+    {},
+    document.title,
+    window.location.pathname + window.location.hash
+  );
+
+  alert("Payment successful! You are now enrolled in your course.");
+
+  window.location.reload();
+  return;
+}
     // Existing study material and video payment verification.
     const { data, error } = await supabaseClient.functions.invoke(
       "Paystack-Payment",
