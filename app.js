@@ -5313,3 +5313,74 @@ async function purchaseCourse(courseId) {
     alert("Something went wrong while starting course payment.");
   }
 }
+
+async function loadStudyCourses() {
+  const catalogue = document.getElementById("courseCatalogue");
+
+  if (!catalogue) return;
+
+  catalogue.textContent = "Loading available courses...";
+
+  const { data: courses, error } = await supabaseClient
+    .from("courses")
+    .select("*")
+    .eq("status", "approved")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    catalogue.textContent =
+      "Could not load courses: " + error.message;
+    return;
+  }
+
+  catalogue.replaceChildren();
+
+  if (!courses || courses.length === 0) {
+    catalogue.textContent = "No approved courses are available yet.";
+    return;
+  }
+
+  courses.forEach(course => {
+    const card = document.createElement("article");
+    card.className = "panel";
+
+    const title = document.createElement("h3");
+    title.textContent = course.title;
+
+    const description = document.createElement("p");
+    description.textContent = course.description || "No description provided.";
+
+    const category = document.createElement("p");
+    category.textContent = "Category: " + (course.category || "General");
+
+    const level = document.createElement("p");
+    level.textContent = "Level: " + (course.level || "Not specified");
+
+    const price = document.createElement("p");
+    price.textContent = course.price_ngn === 0
+      ? "Free course"
+      : "Price: " + new Intl.NumberFormat("en-NG", {
+          style: "currency",
+          currency: "NGN",
+          maximumFractionDigits: 0
+        }).format(course.price_ngn);
+
+    const enrollButton = document.createElement("button");
+    enrollButton.type = "button";
+    enrollButton.className = "primary-button";
+    enrollButton.textContent = course.price_ngn === 0
+      ? "Free Enrolment Coming Soon"
+      : "Purchase Course";
+
+    enrollButton.disabled = course.price_ngn === 0;
+
+    if (course.price_ngn > 0) {
+      enrollButton.addEventListener("click", () => {
+        purchaseCourse(course.id);
+      });
+    }
+
+    card.append(title, description, category, level, price, enrollButton);
+    catalogue.append(card);
+  });
+}
