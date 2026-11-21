@@ -260,6 +260,7 @@ async function loadTutoringData() {
   const { data: tutors, error: tutorError } = await supabaseClient
     .from("tutor_profiles")
     .select("*")
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   if (tutorError) {
@@ -440,10 +441,74 @@ card.append(
           await loadTutoringData();
         });
 
+       
         card.append(form);
+      } else {
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "secondary-button";
+        editButton.textContent = "Edit Profile";
+
+        editButton.addEventListener("click", () => {
+          document.getElementById("tutorDisplayName").value =
+            tutor.display_name || "";
+
+          document.getElementById("tutorSubjects").value =
+            (tutor.subjects || []).join(", ");
+
+          document.getElementById("tutorBio").value =
+            tutor.bio || "";
+
+          document.getElementById("tutorAvailability").value =
+            tutor.availability || "";
+
+          const priceInput =
+            document.getElementById("tutorSessionPrice");
+
+          if (priceInput) {
+            priceInput.value = tutor.session_price_ngn ?? "";
+          }
+
+          document.getElementById("tutorProfileForm")
+            .scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "secondary-button";
+        deleteButton.textContent = "Delete Profile";
+
+        deleteButton.addEventListener("click", async () => {
+          const confirmed = window.confirm(
+            "Are you sure you want to hide your tutor profile? Your StudyFlow account and tutoring records will not be deleted."
+          );
+
+          if (!confirmed) return;
+
+          deleteButton.disabled = true;
+          deleteButton.textContent = "Deleting...";
+
+          const { error } = await supabaseClient
+            .from("tutor_profiles")
+            .update({ is_active: false })
+            .eq("id", authData.user.id);
+
+          if (error) {
+            alert("Could not hide your profile: " + error.message);
+            deleteButton.disabled = false;
+            deleteButton.textContent = "Delete Profile";
+            return;
+          }
+
+          alert("Your tutor profile has been hidden successfully.");
+          await loadTutoringData();
+        });
+
+        card.append(editButton, deleteButton);
       }
 
       directory.append(card);
+
     });
     const tutorPrevious = document.getElementById("tutorPrevious");
 const tutorNext = document.getElementById("tutorNext");
@@ -743,6 +808,7 @@ if (tutorProfileForm) {
           experience: bio,
           availability,
           session_price_ngn: sessionPrice,
+          is_active: true,
         });
 
       if (error) {
