@@ -5375,13 +5375,46 @@ async function loadStudyCourses() {
       ? "Free Enrolment Coming Soon"
       : "Purchase Course";
 
-    enrollButton.disabled = course.price_ngn === 0;
+   enrollButton.disabled = false;
 
     if (course.price_ngn > 0) {
       enrollButton.addEventListener("click", () => {
         purchaseCourse(course.id);
       });
     }
+
+    else {
+  enrollButton.textContent = "Enrol for Free";
+
+  enrollButton.addEventListener("click", async () => {
+    const { data: authData } = await supabaseClient.auth.getUser();
+
+    if (!authData?.user) {
+      alert("Please sign in before enrolling.");
+      return;
+    }
+
+    enrollButton.disabled = true;
+    enrollButton.textContent = "Enrolling...";
+
+    const { error } = await supabaseClient.rpc(
+      "enroll_free_course",
+      { p_course_id: course.id }
+    );
+
+    if (error) {
+      alert("Free enrolment failed: " + error.message);
+      enrollButton.disabled = false;
+      enrollButton.textContent = "Enrol for Free";
+      return;
+    }
+
+    alert("You have successfully enrolled in this course!");
+
+    enrollButton.textContent = "Enrolled";
+    await loadStudyCourses();
+  });
+}
 
     card.append(title, description, category, level, price, enrollButton);
     catalogue.append(card);
