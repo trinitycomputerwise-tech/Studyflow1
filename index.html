@@ -722,6 +722,95 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
     </form>
   </div>
 </section>
+
+      
+<section class="view" id="coursesView">
+  <div class="page-intro">
+    <div>
+      <p class="eyebrow">LEARN, DEVELOP AND EARN</p>
+      <h1>StudyFlow Courses</h1>
+      <p class="muted">
+        Explore courses, learn from experienced tutors and earn certificates.
+      </p>
+    </div>
+  </div>
+
+  <section class="panel" id="courseCreatorPanel" style="display:none;">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">SHARE YOUR KNOWLEDGE</p>
+        <h2>Create a Course</h2>
+      </div>
+    </div>
+
+    <form id="courseCreateForm">
+      <label for="courseTitle">Course title</label>
+      <input id="courseTitle" type="text" maxlength="150"
+        required placeholder="e.g. Introduction to Computer Science">
+
+      <label for="courseDescription">Course description</label>
+      <textarea id="courseDescription" rows="4" maxlength="3000"
+        required placeholder="Describe what students will learn"></textarea>
+
+      <label for="courseCategory">Category</label>
+      <input id="courseCategory" type="text" maxlength="100"
+        required placeholder="e.g. Computer Science">
+
+      <label for="courseLevel">Course level</label>
+      <select id="courseLevel" required>
+        <option value="">Select level</option>
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Advanced">Advanced</option>
+        <option value="All Levels">All Levels</option>
+      </select>
+
+      <label for="coursePrice">Course price (₦)</label>
+      <input id="coursePrice" type="number" min="0" step="1"
+        required placeholder="Enter 0 for a free course">
+
+      <button type="submit" class="primary-button">
+        Submit Course for Approval
+      </button>
+
+      <p id="courseCreateMessage" class="muted" role="status"></p>
+    </form>
+  </section>
+
+  <section class="panel" id="courseAdminPanel" style="display:none;">
+    <h2>Course Approval and Management</h2>
+    <p class="muted">
+      Review submitted courses and approve or reject them.
+    </p>
+    <div id="courseAdminList">
+      <p class="muted">Course submissions will appear here.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Available Courses</h2>
+    <p class="muted">Browse approved courses and enrol to start learning.</p>
+    <div id="courseCatalogue" class="content-grid">
+      <p class="muted">Approved courses will appear here.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>My Courses</h2>
+    <p class="muted">Access your enrolled courses and track your progress.</p>
+    <div id="myCoursesList">
+      <p class="muted">Your enrolled courses will appear here.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>My Certificates</h2>
+    <div id="myCourseCertificates">
+      <p class="muted">Your earned certificates will appear here.</p>
+    </div>
+  </section>
+</section>
+
       
       <section class="view" id="materialsView">
         <div class="page-intro">
