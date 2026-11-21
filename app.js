@@ -1151,7 +1151,7 @@ function toast(message) {
 }
 
 async function setView(view) {
- const known = ["dashboard","assignments","subjects","calendar","tutoring","materials","payouts","quizzes","messages"];
+ const known = ["dashboard","assignments","subjects","calendar","tutoring","materials","courses","payouts","quizzes","messages"];
 
   if (!known.includes(view)) view = "dashboard";
 
@@ -1182,6 +1182,37 @@ async function setView(view) {
   document.getElementById("managedQuizResultsPanel").hidden = !canManageQuizzes;
 }
 
+  if (view === "courses") {
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  const { data: roles, error } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  if (error) {
+    alert("Could not verify your account role.");
+    return;
+  }
+
+  const canCreateCourses = roles?.some(item =>
+    ["admin", "tutor"].includes(item.role)
+  );
+
+  const isAdmin = roles?.some(item => item.role === "admin");
+
+  document.getElementById("courseCreatorPanel").style.display =
+    canCreateCourses ? "" : "none";
+
+  document.getElementById("courseAdminPanel").style.display =
+    isAdmin ? "" : "none";
+}
   if (view === "payouts") {
     const { data: authData } = await supabaseClient.auth.getUser();
     const user = authData?.user;
@@ -1220,6 +1251,7 @@ async function setView(view) {
   if (view === "calendar") renderCalendar();
   if (view === "tutoring") loadTutoringData();
   if (view === "materials") loadStudyMaterials();
+  if (view === "courses") loadStudyCourses();
   if (view === "payouts") loadTutorPayouts();
   if (view === "payouts") loadMaterialTutorPayouts();
   if (view === "payouts") loadTutorPayoutRequests();
