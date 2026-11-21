@@ -1206,6 +1206,9 @@ async function setView(view) {
   );
 
   const isAdmin = roles?.some(item => item.role === "admin");
+    if (isAdmin) {
+  await loadAdminCourses();
+}
 
   document.getElementById("courseCreatorPanel").style.display =
     canCreateCourses ? "" : "none";
@@ -5454,5 +5457,133 @@ if (courseCreateForm) {
       "Course submitted successfully. An administrator must approve it before students can enrol.";
 
     await loadStudyCourses();
+  });
+}
+
+async function loadAdminCourses() {
+  const list = document.getElementById("courseAdminList");
+
+  if (!list) return;
+
+  list.textContent = "Loading courses awaiting approval...";
+
+  const { data: courses, error } = await supabaseClient
+    .from("courses")
+    .select("*")
+    .eq("status", "pending_approval")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    list.textContent = "Could not load courses: " + error.message;
+    return;
+  }
+
+  list.replaceChildren();
+
+  if (!courses || courses.length === 0) {
+    list.textContent = "There are no courses awaiting approval.";
+    return;
+  }
+
+  courses.forEach(course => {
+    const card = document.createElement("article");
+    card.className = "panel";
+
+    const title = document.createElement("h3");
+    title.textContent = course.title;
+
+    const description = document.createElement("p");
+    description.textContent = course.description;
+
+    const details = document.createElement("p");
+    details.textContent =
+      "Category: " + course.category +
+      " | Level: " + course.level +
+      " | Price: " +
+      new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 0
+      }).format(course.price_ngn);
+
+    const approveButton = document.createElement("button");
+    approveButton.type = "button";
+    approveButton.textContent = "Approve Course";
+    approveButton.className = "primary-button";
+
+    approveButton.addEventListener("click", async () => {
+      if (!confirm("Approve this course and make it available to students?")) {
+        return;
+      }
+
+      approveButton.disabled = true;
+
+      const { data: authData } = await supabaseClient.auth.getUser();
+
+      const { error: updateError } = await supabaseClient
+        .from("courses")
+        .update({
+          status: "approved",
+          approved_by: authData.user.id,
+          approved_at: new Date().toISOString(),
+          rejection_reason: null
+        })
+        .eq("id", course.id);
+
+      if (updateError) {
+        alert("Could not approve course: " + updateError.message);
+        approveButton.disabled = false;
+        return;
+      }
+
+      alert("Course approved successfully.");
+      await loadAdminCourses();
+      await loadStudyCourses();
+    });
+
+    const rejectButton = document.createElement("button");
+    rejectButton.type = "button";
+    rejectButton.textContent = "Reject Course";
+    rejectButton.className = "secondary-button";
+
+    rejectButton.addEventListener("click", async () => {
+      const reason = prompt("Enter the reason for rejecting this course:");
+
+      if (reason === null) return;
+
+      if (!reason.trim()) {
+        alert("Please provide a rejection reason.");
+        return;
+      }
+
+      rejectButton.disabled = true;
+
+      const { error: updateError } = await supabaseClient
+        .from("courses")
+        .update({
+          status: "rejected",
+          rejection_reason: reason.trim()
+        })
+        .eq("id", course.id);
+
+      if (updateError) {
+        alert("Could not reject course: " + updateError.message);
+        rejectButton.disabled = false;
+        return;
+      }
+
+      alert("Course rejected.");
+      await loadAdminCourses();
+    });
+
+    card.append(
+      title,
+      description,
+      details,
+      approveButton,
+      rejectButton
+    );
+
+    list.append(card);
   });
 }
