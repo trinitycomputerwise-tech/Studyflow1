@@ -554,7 +554,28 @@ if (tutorNext) {
     document.getElementById("tutorBio").value = ownProfile.bio || "";
     document.getElementById("tutorAvailability").value = ownProfile.availability || "";
     const priceInput = document.getElementById("tutorSessionPrice");
-    if (priceInput) priceInput.value = ownProfile.session_price_ngn ?? "";
+       if (priceInput) priceInput.value = ownProfile.session_price_ngn ?? "";
+
+    let statusElement = document.getElementById("tutorProfileStatus");
+
+    if (!statusElement) {
+      statusElement = document.createElement("p");
+      statusElement.id = "tutorProfileStatus";
+      statusElement.setAttribute("role", "status");
+
+      const profileForm = document.getElementById("tutorProfileForm");
+      if (profileForm) {
+        profileForm.prepend(statusElement);
+      }
+    }
+
+    if (statusElement) {
+      statusElement.textContent = ownProfile.is_active
+        ? "Profile status: Active — visible in the tutor directory."
+        : "Profile status: Hidden — not visible in the tutor directory.";
+
+      statusElement.style.fontWeight = "bold";
+    }
   }
 
     const { data: ownRequests, error: requestError } = await supabaseClient
