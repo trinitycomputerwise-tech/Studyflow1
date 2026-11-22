@@ -5798,6 +5798,24 @@ async function openStudyCourse(courseId) {
     return;
   }
 
+  const { data: lessonProgress, error: progressError } =
+  await supabaseClient
+    .from("course_lesson_progress")
+    .select("lesson_id, is_completed")
+    .eq("student_id", authData.user.id);
+
+if (progressError) {
+  modulesList.textContent =
+    "Could not load lesson progress: " + progressError.message;
+  return;
+}
+
+const completedLessonIds = new Set(
+  (lessonProgress || [])
+    .filter(item => item.is_completed)
+    .map(item => item.lesson_id)
+);
+
   modulesList.replaceChildren();
 
   if (!modules || modules.length === 0) {
@@ -5858,6 +5876,49 @@ async function openStudyCourse(courseId) {
         lessonCard.append(materialLink);
       }
 
+      const completeButton = document.createElement("button");
+completeButton.type = "button";
+completeButton.className = "primary-button";
+
+const alreadyCompleted = completedLessonIds.has(lesson.id);
+
+completeButton.textContent = alreadyCompleted
+  ? "Completed ✓"
+  : "Mark as Completed";
+
+completeButton.disabled = alreadyCompleted;
+
+completeButton.addEventListener("click", async () => {
+  completeButton.disabled = true;
+  completeButton.textContent = "Saving...";
+
+  const { error: saveError } = await supabaseClient
+    .from("course_lesson_progress")
+    .upsert(
+      {
+        lesson_id: lesson.id,
+        student_id: authData.user.id,
+        is_completed: true,
+        completed_at: new Date().toISOString()
+      },
+      {
+        onConflict: "lesson_id,student_id"
+      }
+    );
+
+  if (saveError) {
+    alert("Could not save lesson progress: " + saveError.message);
+    completeButton.disabled = false;
+    completeButton.textContent = "Mark as Completed";
+    return;
+  }
+
+  completedLessonIds.add(lesson.id);
+  completeButton.textContent = "Completed ✓";
+  alert("Lesson marked as completed!");
+});
+
+lessonCard.append(completeButton);
       moduleCard.append(lessonCard);
     });
 
