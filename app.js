@@ -3580,6 +3580,7 @@ function addQuizQuestion() {
 }
 let currentQuizzesPage = 1;
 const quizzesPerPage = 10;
+
 async function loadQuizzes() {
   const list = document.getElementById("quizzesList");
   if (!list) return;
@@ -3836,9 +3837,16 @@ document.getElementById("quizForm")?.addEventListener(
 // STUDENT TAKE QUIZ
 // ===============================
 
+
 async function takeQuiz(quizId) {
   const panel = document.getElementById("takeQuizPanel");
   const content = document.getElementById("takeQuizContent");
+
+  // Stop any timer from a previously opened quiz.
+  if (takeQuiz.timerInterval) {
+    clearInterval(takeQuiz.timerInterval);
+    takeQuiz.timerInterval = null;
+  }
 
   panel.hidden = false;
   content.innerHTML = "<p>Loading quiz questions...</p>";
@@ -3859,6 +3867,12 @@ async function takeQuiz(quizId) {
 
     content.innerHTML = `
       <h2>Take Quiz</h2>
+
+      <div class="panel" style="margin-top:15px;">
+        <h3 id="quizTimer">Time remaining: 30:00</h3>
+        <p id="quizTimerWarning" class="muted"></p>
+      </div>
+
       <form id="studentQuizForm">
         ${questions.map((q, index) => `
           <div class="panel" style="margin-top:15px;">
@@ -3871,7 +3885,6 @@ async function takeQuiz(quizId) {
                   type="radio"
                   name="question_${index}"
                   value="${optionIndex}"
-                  required
                 >
                 ${escapeHtml(option)}
               </label>
@@ -3883,50 +3896,106 @@ async function takeQuiz(quizId) {
           Submit Answers
         </button>
       </form>
+
       <p id="quizSubmitMessage" class="muted"></p>
     `;
 
-    document.getElementById("studentQuizForm").addEventListener(
-      "submit",
-      async event => {
-        event.preventDefault();
+    const form = document.getElementById("studentQuizForm");
+    const timerDisplay = document.getElementById("quizTimer");
+    const timerWarning = document.getElementById("quizTimerWarning");
 
-        const answers = {};
+    let remainingSeconds = 30 * 60;
+    let isSubmitting = false;
 
-        questions.forEach((question, index) => {
-          const selected = document.querySelector(
-            `input[name="question_${index}"]:checked`
-          );
+    async function submitQuiz(timeExpired = false) {
+      if (isSubmitting) return;
 
-          answers[question.id] = Number(selected.value);
-        });
+      isSubmitting = true;
 
-        const submitButton = event.currentTarget.querySelector(
-          'button[type="submit"]'
+      if (takeQuiz.timerInterval) {
+        clearInterval(takeQuiz.timerInterval);
+        takeQuiz.timerInterval = null;
+      }
+
+      const answers = {};
+
+      questions.forEach((question, index) => {
+        const selected = form.querySelector(
+          `input[name="question_${index}"]:checked`
         );
 
-        submitButton.disabled = true;
+        answers[question.id] = selected
+          ? Number(selected.value)
+          : null;
+      });
+
+      const submitButton = form.querySelector(
+        'button[type="submit"]'
+      );
+
+      submitButton.disabled = true;
+
+      document.getElementById("quizSubmitMessage").textContent =
+        timeExpired
+          ? "Time is up! Submitting your answers..."
+          : "Marking your answers...";
+
+      try {
+        const { data: result, error: submitError } =
+          await supabaseClient.rpc("submit_quiz_attempt", {
+            p_quiz_id: quizId,
+            p_answers: answers
+          });
+
+        if (submitError) throw submitError;
+
+        showQuizResult(result);
+        await loadQuizResults();
+
+      } catch (error) {
         document.getElementById("quizSubmitMessage").textContent =
-          "Marking your answers...";
+          "Could not submit quiz: " + error.message;
 
-        try {
-          const { data: result, error: submitError } =
-            await supabaseClient.rpc("submit_quiz_attempt", {
-              p_quiz_id: quizId,
-              p_answers: answers
-            });
-
-          if (submitError) throw submitError;
-
-          showQuizResult(result);
-          await loadQuizResults();
-
-        } catch (error) {
-          document.getElementById("quizSubmitMessage").textContent =
-            "Could not submit quiz: " + error.message;
-          submitButton.disabled = false;
-        }
+        submitButton.disabled = false;
+        isSubmitting = false;
       }
+    }
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      await submitQuiz(false);
+    });
+
+    function updateQuizTimer() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+
+      timerDisplay.textContent =
+        `Time remaining: ${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+      if (remainingSeconds <= 60 && remainingSeconds > 0) {
+        timerWarning.textContent = "Warning: One minute or less remaining!";
+      }
+
+      if (remainingSeconds <= 0) {
+        clearInterval(takeQuiz.timerInterval);
+        takeQuiz.timerInterval = null;
+
+        timerDisplay.textContent = "Time is up!";
+        timerWarning.textContent = "Your answers are being submitted automatically.";
+
+        submitQuiz(true);
+        return;
+      }
+
+      remainingSeconds--;
+    }
+
+    updateQuizTimer();
+
+    takeQuiz.timerInterval = setInterval(
+      updateQuizTimer,
+      1000
     );
 
   } catch (error) {
