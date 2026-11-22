@@ -2248,15 +2248,28 @@ signupButton?.addEventListener("click", async () => {
     return;
   }
 
-  showAuthMessage("Creating your account...");
+ const fullName = document
+  .getElementById("auth-full-name")
+  .value.trim();
 
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: window.location.origin
-    }
-  });
+if (!fullName) {
+  showAuthMessage("Please enter your full name.");
+  document.getElementById("auth-full-name").focus();
+  return;
+}
+
+showAuthMessage("Creating your account...");
+
+const { data, error } = await supabaseClient.auth.signUp({
+  email,
+  password,
+  options: {
+    data: {
+      full_name: fullName
+    },
+    emailRedirectTo: window.location.origin
+  }
+});
 
   if (error) {
     showAuthMessage(error.message);
@@ -6362,7 +6375,7 @@ async function loadMyCourseCertificates() {
             <h1>StudyFlow</h1>
             <h2>Certificate of Completion</h2>
             <p>This certifies that</p>
-            <h2>${escapeCertificateText(authData.user.email || "Student")}</h2>
+           <h2>${escapeCertificateText(authData.user.user_metadata?.full_name || "Student")}</h2>
             <p>has successfully completed the course</p>
             <h2>${escapeCertificateText(certificate.courses?.title || "StudyFlow Course")}</h2>
             <p>Issued on ${new Date(certificate.issued_at).toLocaleDateString("en-NG")}</p>
