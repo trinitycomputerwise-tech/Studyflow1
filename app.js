@@ -1255,6 +1255,7 @@ async function setView(view) {
   if (view === "tutoring") loadTutoringData();
   if (view === "materials") loadStudyMaterials();
   if (view === "courses") loadStudyCourses();
+  if (view === "courses") loadMyCourses();
   if (view === "payouts") loadTutorPayouts();
   if (view === "payouts") loadMaterialTutorPayouts();
   if (view === "payouts") loadTutorPayoutRequests();
