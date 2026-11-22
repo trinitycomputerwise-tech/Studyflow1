@@ -5660,6 +5660,64 @@ async function loadAdminCourses() {
   });
 }
 
+
+async function loadCourseManagerOptions() {
+  const selector = document.getElementById("manageCourseSelect");
+
+  if (!selector) return;
+
+  selector.innerHTML = '<option value="">Loading courses...</option>';
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  const user = authData?.user;
+
+  if (authError || !user) {
+    selector.innerHTML = '<option value="">Please sign in</option>';
+    return;
+  }
+
+  const { data: roles, error: roleError } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  if (roleError) {
+    selector.innerHTML = '<option value="">Could not verify permissions</option>';
+    return;
+  }
+
+  const isAdmin = roles?.some(item => item.role === "admin");
+
+  let query = supabaseClient
+    .from("courses")
+    .select("id, title, status")
+    .order("created_at", { ascending: false });
+
+  if (!isAdmin) {
+    query = query.eq("creator_id", user.id);
+  }
+
+  const { data: courses, error } = await query;
+
+  if (error) {
+    selector.innerHTML = '<option value="">Could not load courses</option>';
+    console.error("Course manager loading error:", error);
+    return;
+  }
+
+  selector.innerHTML = '<option value="">Choose a course</option>';
+
+  (courses || []).forEach(course => {
+    const option = document.createElement("option");
+    option.value = course.id;
+    option.textContent = course.title + " (" + course.status + ")";
+    selector.appendChild(option);
+  });
+}
+
+
 async function loadMyCourses() {
   const list = document.getElementById("myCoursesList");
 
