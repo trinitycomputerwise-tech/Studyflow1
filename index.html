@@ -787,6 +787,91 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
     </div>
   </section>
 
+  
+<section class="panel" id="courseContentManagerPanel" style="display:none;">
+  <div class="panel-heading">
+    <div>
+      <p class="eyebrow">BUILD YOUR COURSE</p>
+      <h2>Course Content Manager</h2>
+    </div>
+  </div>
+
+  <label for="manageCourseSelect">Select your course</label>
+  <select id="manageCourseSelect" required>
+    <option value="">Choose a course</option>
+  </select>
+
+  <form id="courseModuleForm">
+    <h3>Add a Module</h3>
+
+    <label for="newModuleTitle">Module title</label>
+    <input id="newModuleTitle" type="text" required
+      maxlength="150" placeholder="e.g. Introduction to Computers">
+
+    <label for="newModuleDescription">Module description</label>
+    <textarea id="newModuleDescription" rows="3"
+      placeholder="What will students learn in this module?"></textarea>
+
+    <button type="submit" class="primary-button">
+      Add Module
+    </button>
+    <p id="courseModuleMessage" class="muted" role="status"></p>
+  </form>
+
+  <hr>
+
+  <form id="courseLessonForm">
+    <h3>Add a Lesson</h3>
+
+    <label for="lessonModuleSelect">Select module</label>
+    <select id="lessonModuleSelect" required>
+      <option value="">Choose a module</option>
+    </select>
+
+    <label for="newLessonTitle">Lesson title</label>
+    <input id="newLessonTitle" type="text" required
+      maxlength="150" placeholder="e.g. What is a Computer?">
+
+    <label for="newLessonDescription">Lesson description</label>
+    <textarea id="newLessonDescription" rows="3"
+      placeholder="Describe this lesson"></textarea>
+
+    <label for="newLessonType">Lesson type</label>
+    <select id="newLessonType" required>
+      <option value="text">Text lesson</option>
+      <option value="video">Video lesson</option>
+      <option value="pdf">PDF lesson</option>
+    </select>
+
+    <label for="newLessonContent">Lesson text or notes</label>
+    <textarea id="newLessonContent" rows="5"
+      placeholder="Enter lesson content or notes"></textarea>
+
+    <label for="newLessonVideoUrl">Video URL (optional)</label>
+    <input id="newLessonVideoUrl" type="url"
+      placeholder="https://...">
+
+    <label for="newLessonMaterialUrl">PDF or material URL (optional)</label>
+    <input id="newLessonMaterialUrl" type="url"
+      placeholder="https://...">
+
+    <label>
+      <input id="newLessonPreview" type="checkbox">
+      Make this lesson available as a free preview
+    </label>
+
+    <button type="submit" class="primary-button">
+      Add Lesson
+    </button>
+    <p id="courseLessonMessage" class="muted" role="status"></p>
+  </form>
+
+  <div id="courseContentManagerList">
+    <p class="muted">Select a course to manage its content.</p>
+  </div>
+</section>
+
+
   <section class="panel">
     <h2>Available Courses</h2>
     <p class="muted">Browse approved courses and enrol to start learning.</p>
