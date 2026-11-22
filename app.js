@@ -1256,6 +1256,7 @@ async function setView(view) {
   if (view === "materials") loadStudyMaterials();
   if (view === "courses") loadStudyCourses();
   if (view === "courses") loadMyCourses();
+  if (view === "courses") loadMyCourseCertificates();
   if (view === "payouts") loadTutorPayouts();
   if (view === "payouts") loadMaterialTutorPayouts();
   if (view === "payouts") loadTutorPayoutRequests();
@@ -5981,4 +5982,142 @@ if (closeCourseContentButton) {
   closeCourseContentButton.addEventListener("click", () => {
     document.getElementById("courseContentPanel").hidden = true;
   });
+}
+
+async function loadMyCourseCertificates() {
+  const list = document.getElementById("myCourseCertificates");
+
+  if (!list) return;
+
+  list.textContent = "Loading your certificates...";
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !authData?.user) {
+    list.textContent = "Please sign in to view your certificates.";
+    return;
+  }
+
+  const { data: certificates, error } = await supabaseClient
+    .from("course_certificates")
+    .select(`
+      id,
+      certificate_number,
+      issued_at,
+      courses (
+        title
+      )
+    `)
+    .eq("student_id", authData.user.id)
+    .order("issued_at", { ascending: false });
+
+  if (error) {
+    list.textContent =
+      "Could not load certificates: " + error.message;
+    return;
+  }
+
+  list.replaceChildren();
+
+  if (!certificates || certificates.length === 0) {
+    list.textContent = "You have not earned any course certificates yet.";
+    return;
+  }
+
+  certificates.forEach(certificate => {
+    const card = document.createElement("article");
+    card.className = "panel";
+
+    const title = document.createElement("h3");
+    title.textContent =
+      certificate.courses?.title || "StudyFlow Course Certificate";
+
+    const number = document.createElement("p");
+    number.textContent =
+      "Certificate number: " + certificate.certificate_number;
+
+    const date = document.createElement("p");
+    date.textContent =
+      "Issued: " +
+      new Date(certificate.issued_at).toLocaleDateString("en-NG");
+
+    const printButton = document.createElement("button");
+    printButton.type = "button";
+    printButton.className = "primary-button";
+    printButton.textContent = "Print Certificate";
+
+    printButton.addEventListener("click", () => {
+      const printWindow = window.open("", "_blank");
+
+      if (!printWindow) {
+        alert("Please allow pop-ups to print your certificate.");
+        return;
+      }
+
+      const certificateHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>StudyFlow Certificate</title>
+          <style>
+            body {
+              font-family: Georgia, serif;
+              text-align: center;
+              padding: 60px 30px;
+              color: #1e293b;
+            }
+            .certificate {
+              border: 10px double #2563eb;
+              padding: 55px 30px;
+              max-width: 850px;
+              margin: auto;
+            }
+            h1 { font-size: 38px; color: #1d4ed8; }
+            h2 { font-size: 28px; }
+            .number { margin-top: 35px; font-size: 14px; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="certificate">
+            <h1>StudyFlow</h1>
+            <h2>Certificate of Completion</h2>
+            <p>This certifies that</p>
+            <h2>${escapeCertificateText(authData.user.email || "Student")}</h2>
+            <p>has successfully completed the course</p>
+            <h2>${escapeCertificateText(certificate.courses?.title || "StudyFlow Course")}</h2>
+            <p>Issued on ${new Date(certificate.issued_at).toLocaleDateString("en-NG")}</p>
+            <p class="number">Certificate Number: ${escapeCertificateText(certificate.certificate_number)}</p>
+            <p>StudyFlow Learning Platform</p>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          <\/script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.open();
+      printWindow.document.write(certificateHtml);
+      printWindow.document.close();
+    });
+
+    card.append(title, number, date, printButton);
+    list.append(card);
+  });
+}
+
+function escapeCertificateText(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
 }
