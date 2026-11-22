@@ -1215,6 +1215,8 @@ async function setView(view) {
 
   document.getElementById("courseAdminPanel").style.display =
     isAdmin ? "" : "none";
+    document.getElementById("courseContentManagerPanel").style.display =
+    canCreateCourses ? "" : "none";
 }
   if (view === "payouts") {
     const { data: authData } = await supabaseClient.auth.getUser();
