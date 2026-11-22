@@ -5848,6 +5848,92 @@ document.getElementById("courseModuleForm")
   });
 
 
+document.getElementById("courseLessonForm")
+  ?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const moduleId = document.getElementById("lessonModuleSelect").value;
+    const title = document.getElementById("newLessonTitle").value.trim();
+    const description = document.getElementById("newLessonDescription").value.trim();
+    const lessonType = document.getElementById("newLessonType").value;
+    const content = document.getElementById("newLessonContent").value.trim();
+    const videoUrl = document.getElementById("newLessonVideoUrl").value.trim();
+    const materialUrl = document.getElementById("newLessonMaterialUrl").value.trim();
+    const isPreview = document.getElementById("newLessonPreview").checked;
+    const message = document.getElementById("courseLessonMessage");
+    const submitButton = event.currentTarget.querySelector('button[type="submit"]');
+
+    if (!moduleId) {
+      message.textContent = "Please select a module first.";
+      return;
+    }
+
+    if (!title) {
+      message.textContent = "Please enter a lesson title.";
+      return;
+    }
+
+    if (lessonType === "video" && !videoUrl) {
+      message.textContent = "Please enter the video URL.";
+      return;
+    }
+
+    if (lessonType === "pdf" && !materialUrl) {
+      message.textContent = "Please enter the PDF or material URL.";
+      return;
+    }
+
+    submitButton.disabled = true;
+    message.textContent = "Saving lesson...";
+
+    const { data: existingLessons, error: countError } =
+      await supabaseClient
+        .from("course_lessons")
+        .select("position")
+        .eq("module_id", moduleId)
+        .order("position", { ascending: false })
+        .limit(1);
+
+    if (countError) {
+      message.textContent = "Could not check existing lessons: " + countError.message;
+      submitButton.disabled = false;
+      return;
+    }
+
+    const nextPosition = existingLessons?.length
+      ? existingLessons[0].position + 1
+      : 1;
+
+    const { error } = await supabaseClient
+      .from("course_lessons")
+      .insert({
+        module_id: moduleId,
+        title,
+        description,
+        lesson_type: lessonType,
+        content,
+        video_url: videoUrl || null,
+        material_url: materialUrl || null,
+        is_preview: isPreview,
+        position: nextPosition
+      });
+
+    if (error) {
+      message.textContent = "Could not save lesson: " + error.message;
+      submitButton.disabled = false;
+      return;
+    }
+
+    message.textContent = "Lesson added successfully!";
+    event.currentTarget.reset();
+    submitButton.disabled = false;
+
+    const courseId = document.getElementById("manageCourseSelect").value;
+    await loadCourseManagerModules(courseId);
+  });
+
+
+
 async function loadMyCourses() {
   const list = document.getElementById("myCoursesList");
 
