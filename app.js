@@ -2203,11 +2203,11 @@ if (dashboardLogoutButton) {
   dashboardLogoutButton.hidden = !user;
 }
 
-  if (authUser) {
-    authUser.textContent = user
-      ? "Signed in as " + user.email
-      : "You are not signed in.";
-  }
+ if (authUser) {
+  authUser.textContent = user
+    ? "Welcome, " + (user.user_metadata?.full_name || user.email)
+    : "You are not signed in.";
+}
 }
 // Log in existing users
 authForm?.addEventListener("submit", async (event) => {
