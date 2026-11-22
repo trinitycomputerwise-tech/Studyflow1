@@ -5736,3 +5736,140 @@ async function loadMyCourses() {
     list.append(card);
   });
 }
+
+async function openStudyCourse(courseId) {
+  const panel = document.getElementById("courseContentPanel");
+  const modulesList = document.getElementById("courseModulesList");
+
+  if (!panel || !modulesList) return;
+
+  panel.hidden = false;
+  modulesList.textContent = "Loading course content...";
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+
+  if (!authData?.user) {
+    modulesList.textContent = "Please sign in to access this course.";
+    return;
+  }
+
+  const { data: course, error: courseError } = await supabaseClient
+    .from("courses")
+    .select("id, title, description")
+    .eq("id", courseId)
+    .single();
+
+  if (courseError || !course) {
+    modulesList.textContent = "Could not load this course.";
+    return;
+  }
+
+  document.getElementById("courseContentTitle").textContent =
+    course.title;
+
+  document.getElementById("courseContentDescription").textContent =
+    course.description || "";
+
+  const { data: modules, error } = await supabaseClient
+    .from("course_modules")
+    .select(`
+      id,
+      title,
+      description,
+      position,
+      course_lessons (
+        id,
+        title,
+        description,
+        lesson_type,
+        content,
+        video_url,
+        material_url,
+        is_preview,
+        position
+      )
+    `)
+    .eq("course_id", courseId)
+    .order("position", { ascending: true });
+
+  if (error) {
+    modulesList.textContent =
+      "Could not load course modules: " + error.message;
+    return;
+  }
+
+  modulesList.replaceChildren();
+
+  if (!modules || modules.length === 0) {
+    modulesList.textContent =
+      "No modules have been added to this course yet.";
+    return;
+  }
+
+  modules.forEach(module => {
+    const moduleCard = document.createElement("article");
+    moduleCard.className = "panel";
+
+    const heading = document.createElement("h3");
+    heading.textContent = module.title;
+
+    const description = document.createElement("p");
+    description.textContent = module.description || "";
+
+    moduleCard.append(heading, description);
+
+    const lessons = module.course_lessons || [];
+
+    lessons.sort((a, b) => a.position - b.position);
+
+    lessons.forEach(lesson => {
+      const lessonCard = document.createElement("div");
+      lessonCard.className = "panel";
+
+      const lessonTitle = document.createElement("h4");
+      lessonTitle.textContent = lesson.title;
+
+      const lessonDescription = document.createElement("p");
+      lessonDescription.textContent = lesson.description || "";
+
+      lessonCard.append(lessonTitle, lessonDescription);
+
+      if (lesson.content) {
+        const content = document.createElement("p");
+        content.textContent = lesson.content;
+        lessonCard.append(content);
+      }
+
+      if (lesson.video_url) {
+        const videoLink = document.createElement("a");
+        videoLink.href = lesson.video_url;
+        videoLink.target = "_blank";
+        videoLink.rel = "noopener noreferrer";
+        videoLink.textContent = "Watch Lesson Video";
+        lessonCard.append(videoLink);
+      }
+
+      if (lesson.material_url) {
+        const materialLink = document.createElement("a");
+        materialLink.href = lesson.material_url;
+        materialLink.target = "_blank";
+        materialLink.rel = "noopener noreferrer";
+        materialLink.textContent = "Open Lesson Material";
+        lessonCard.append(materialLink);
+      }
+
+      moduleCard.append(lessonCard);
+    });
+
+    modulesList.append(moduleCard);
+  });
+}
+
+const closeCourseContentButton =
+  document.getElementById("closeCourseContent");
+
+if (closeCourseContentButton) {
+  closeCourseContentButton.addEventListener("click", () => {
+    document.getElementById("courseContentPanel").hidden = true;
+  });
+}
