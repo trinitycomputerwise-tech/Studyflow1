@@ -5924,6 +5924,54 @@ lessonCard.append(completeButton);
 
     modulesList.append(moduleCard);
   });
+  const totalLessons = modules.reduce(
+  (total, module) =>
+    total + (module.course_lessons || []).length,
+  0
+);
+
+const completedCount = modules.reduce(
+  (total, module) =>
+    total + (module.course_lessons || []).filter(
+      lesson => completedLessonIds.has(lesson.id)
+    ).length,
+  0
+);
+
+if (totalLessons > 0 && completedCount === totalLessons) {
+  const certificateButton = document.createElement("button");
+  certificateButton.type = "button";
+  certificateButton.className = "primary-button";
+  certificateButton.textContent = "Get My Course Certificate";
+
+  certificateButton.addEventListener("click", async () => {
+    certificateButton.disabled = true;
+    certificateButton.textContent = "Issuing Certificate...";
+
+    const { data, error } = await supabaseClient.rpc(
+      "issue_course_certificate",
+      { p_course_id: courseId }
+    );
+
+    if (error) {
+      alert("Certificate issuance failed: " + error.message);
+      certificateButton.disabled = false;
+      certificateButton.textContent = "Get My Course Certificate";
+      return;
+    }
+
+    alert(
+      "Congratulations! Your course certificate has been issued." +
+      (data?.certificate_number
+        ? "\nCertificate number: " + data.certificate_number
+        : "")
+    );
+
+    certificateButton.textContent = "Certificate Issued ✓";
+  });
+
+  modulesList.append(certificateButton);
+}
 }
 
 const closeCourseContentButton =
