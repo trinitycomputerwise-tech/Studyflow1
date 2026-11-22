@@ -2208,7 +2208,16 @@ if (dashboardLogoutButton) {
     ? "Welcome, " + (user.user_metadata?.full_name || user.email)
     : "You are not signed in.";
 }
+
+  const dashboardUser = document.getElementById("dashboard-user");
+
+if (dashboardUser) {
+  dashboardUser.textContent = user
+    ? "Welcome, " + (user.user_metadata?.full_name || user.email)
+    : "";
 }
+}
+
 // Log in existing users
 authForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
