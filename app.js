@@ -1259,6 +1259,7 @@ async function setView(view) {
   if (view === "courses") loadStudyCourses();
   if (view === "courses") loadMyCourses();
   if (view === "courses") loadMyCourseCertificates();
+  if (view === "courses") loadCourseManagerOptions();
   if (view === "payouts") loadTutorPayouts();
   if (view === "payouts") loadMaterialTutorPayouts();
   if (view === "payouts") loadTutorPayoutRequests();
@@ -5716,6 +5717,135 @@ async function loadCourseManagerOptions() {
     selector.appendChild(option);
   });
 }
+
+
+async function loadCourseManagerModules(courseId) {
+  const moduleSelector = document.getElementById("lessonModuleSelect");
+  const managerList = document.getElementById("courseContentManagerList");
+
+  if (!moduleSelector || !managerList) return;
+
+  moduleSelector.innerHTML =
+    '<option value="">Loading modules...</option>';
+
+  managerList.textContent = "Loading course modules...";
+
+  if (!courseId) {
+    moduleSelector.innerHTML =
+      '<option value="">Choose a module</option>';
+    managerList.textContent = "Select a course to manage its content.";
+    return;
+  }
+
+  const { data: modules, error } = await supabaseClient
+    .from("course_modules")
+    .select("id, title, description, position")
+    .eq("course_id", courseId)
+    .order("position", { ascending: true });
+
+  if (error) {
+    moduleSelector.innerHTML =
+      '<option value="">Could not load modules</option>';
+    managerList.textContent =
+      "Could not load modules: " + error.message;
+    return;
+  }
+
+  moduleSelector.innerHTML =
+    '<option value="">Choose a module</option>';
+
+  managerList.replaceChildren();
+
+  if (!modules || modules.length === 0) {
+    managerList.textContent =
+      "No modules have been added to this course yet.";
+    return;
+  }
+
+  modules.forEach(module => {
+    const option = document.createElement("option");
+    option.value = module.id;
+    option.textContent = module.title;
+    moduleSelector.appendChild(option);
+
+    const heading = document.createElement("h3");
+    heading.textContent = module.title;
+
+    const description = document.createElement("p");
+    description.textContent = module.description || "";
+
+    managerList.append(heading, description);
+  });
+}
+
+document.getElementById("manageCourseSelect")
+  ?.addEventListener("change", event => {
+    loadCourseManagerModules(event.target.value);
+  });
+
+
+document.getElementById("courseModuleForm")
+  ?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const courseId = document.getElementById("manageCourseSelect").value;
+    const title = document.getElementById("newModuleTitle").value.trim();
+    const description = document.getElementById("newModuleDescription").value.trim();
+    const message = document.getElementById("courseModuleMessage");
+    const submitButton = event.currentTarget.querySelector('button[type="submit"]');
+
+    if (!courseId) {
+      message.textContent = "Please select a course first.";
+      return;
+    }
+
+    if (!title) {
+      message.textContent = "Please enter a module title.";
+      return;
+    }
+
+    submitButton.disabled = true;
+    message.textContent = "Saving module...";
+
+    const { data: existingModules, error: countError } =
+      await supabaseClient
+        .from("course_modules")
+        .select("position")
+        .eq("course_id", courseId)
+        .order("position", { ascending: false })
+        .limit(1);
+
+    if (countError) {
+      message.textContent = "Could not check existing modules: " + countError.message;
+      submitButton.disabled = false;
+      return;
+    }
+
+    const nextPosition = existingModules?.length
+      ? existingModules[0].position + 1
+      : 1;
+
+    const { error } = await supabaseClient
+      .from("course_modules")
+      .insert({
+        course_id: courseId,
+        title,
+        description,
+        position: nextPosition
+      });
+
+    if (error) {
+      message.textContent = "Could not save module: " + error.message;
+      submitButton.disabled = false;
+      return;
+    }
+
+    message.textContent = "Module added successfully!";
+    event.currentTarget.reset();
+    submitButton.disabled = false;
+
+    await loadCourseManagerModules(courseId);
+  });
 
 
 async function loadMyCourses() {
