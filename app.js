@@ -2157,28 +2157,26 @@ document.getElementById("footer-find-tutor")
       document.getElementById("public-explore-tutors-button")?.click();
     }
   });
+
 function updateAuthUI(user) {
   const authSection = document.getElementById("auth-section");
   const dashboard = document.getElementById("dashboard-content");
-
-const publicHomepage = document.getElementById("public-homepage");
-const resetSection = document.getElementById("reset-password-section");
-const isResettingPassword = resetSection && !resetSection.hidden;
-
-if (publicHomepage) {
-  publicHomepage.hidden = Boolean(user) || isResettingPassword;
-}
-
-if (authSection) {
-  authSection.hidden =
-    Boolean(user) || (!publicHomepage.hidden) || isResettingPassword;
-}
-
- if (dashboard) {
+  const publicHomepage = document.getElementById("public-homepage");
   const resetSection = document.getElementById("reset-password-section");
   const isResettingPassword = resetSection && !resetSection.hidden;
-  dashboard.hidden = !user || isResettingPassword;
-}
+
+  if (publicHomepage) {
+    publicHomepage.hidden = Boolean(user) || isResettingPassword;
+  }
+
+  if (authSection) {
+    authSection.hidden =
+      Boolean(user) || (!publicHomepage.hidden) || isResettingPassword;
+  }
+
+  if (dashboard) {
+    dashboard.hidden = !user || isResettingPassword;
+  }
 
   if (authForm) {
     authForm.hidden = Boolean(user);
@@ -2193,31 +2191,30 @@ if (authSection) {
   }
 
   if (logoutButton) {
-  logoutButton.hidden = !user;
-}
+    logoutButton.hidden = !user;
+  }
 
-const dashboardLogoutButton =
-  document.getElementById("dashboard-logout");
+  const dashboardLogoutButton =
+    document.getElementById("dashboard-logout");
 
-if (dashboardLogoutButton) {
-  dashboardLogoutButton.hidden = !user;
-}
+  if (dashboardLogoutButton) {
+    dashboardLogoutButton.hidden = !user;
+  }
 
- if (authUser) {
-  authUser.textContent = user
-    ? "Welcome, " + (user.user_metadata?.full_name || user.email)
-    : "You are not signed in.";
-}
-}
-const dashboardUser = document.getElementById("dashboard-user");
+  if (authUser) {
+    authUser.textContent = user
+      ? "Welcome, " + (user.user_metadata?.full_name || user.email)
+      : "You are not signed in.";
+  }
 
-if (dashboardUser) {
-  dashboardUser.textContent = user
-    ? "Welcome, " + (user.user_metadata?.full_name || user.email)
-    : "";
-}
-}
+  const dashboardUser = document.getElementById("dashboard-user");
 
+  if (dashboardUser) {
+    dashboardUser.textContent = user
+      ? "Welcome, " + (user.user_metadata?.full_name || user.email)
+      : "";
+  }
+}
 // Log in existing users
 authForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
