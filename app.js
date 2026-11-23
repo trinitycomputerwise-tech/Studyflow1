@@ -2462,9 +2462,11 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 
 setTimeout(async () => {
   const payoutsButton = document.getElementById("payoutsNavButton");
+  const accountsButton = document.getElementById("accountsNavButton");
 
   if (!session?.user) {
     if (payoutsButton) payoutsButton.hidden = true;
+    if (accountsButton) accountsButton.hidden = true;
     return;
   }
 
@@ -2478,8 +2480,11 @@ setTimeout(async () => {
   if (payoutsButton) {
     payoutsButton.hidden = !isAdmin;
   }
+
+  if (accountsButton) {
+    accountsButton.hidden = !isAdmin;
+  }
 }, 0);
-  
   if (event === "PASSWORD_RECOVERY") {
     document.getElementById("auth-section").hidden = true;
     document.getElementById("reset-password-section").hidden = false;
