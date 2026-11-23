@@ -5456,6 +5456,7 @@ async function loadStudyCourses() {
     .from("courses")
     .select("*")
     .eq("status", "approved")
+    .eq("is_archived", false)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -5784,6 +5785,8 @@ async function loadCourseManagerOptions() {
     .select("id, title, status")
     .order("created_at", { ascending: false });
 
+  query = query.eq("is_archived", false);
+
   if (!isAdmin) {
     query = query.eq("creator_id", user.id);
   }
@@ -5867,10 +5870,171 @@ async function loadCourseManagerModules(courseId) {
 }
 
 document.getElementById("manageCourseSelect")
-  ?.addEventListener("change", event => {
-    loadCourseManagerModules(event.target.value);
+  ?.addEventListener("change", async event => {
+    const courseId = event.target.value;
+
+    loadCourseManagerModules(courseId);
+
+    const message = document.getElementById("courseEditMessage");
+
+    if (!courseId) {
+      document.getElementById("courseEditForm")?.reset();
+      if (message) message.textContent = "";
+      return;
+    }
+
+    if (message) message.textContent = "Loading course details...";
+
+    const { data: course, error } = await supabaseClient
+      .from("courses")
+      .select("title, description, category, level, price_ngn")
+      .eq("id", courseId)
+      .single();
+
+    if (error) {
+      if (message) {
+        message.textContent = "Could not load course: " + error.message;
+      }
+      return;
+    }
+
+    document.getElementById("editCourseTitle").value = course.title || "";
+    document.getElementById("editCourseDescription").value = course.description || "";
+    document.getElementById("editCourseCategory").value = course.category || "";
+    document.getElementById("editCourseLevel").value = course.level || "";
+    document.getElementById("editCoursePrice").value = course.price_ngn ?? 0;
+
+    if (message) message.textContent = "Course details loaded.";
   });
 
+document.getElementById("courseEditForm")
+  ?.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const courseId = document.getElementById("manageCourseSelect").value;
+    const message = document.getElementById("courseEditMessage");
+    const submitButton = event.currentTarget.querySelector('button[type="submit"]');
+
+    if (!courseId) {
+      message.textContent = "Please select a course first.";
+      return;
+    }
+
+    const title = document.getElementById("editCourseTitle").value.trim();
+    const description = document.getElementById("editCourseDescription").value.trim();
+    const category = document.getElementById("editCourseCategory").value.trim();
+    const level = document.getElementById("editCourseLevel").value;
+    const price = Number(document.getElementById("editCoursePrice").value);
+
+    if (!title || !description || !category || !level ||
+        !Number.isInteger(price) || price < 0) {
+      message.textContent = "Please complete all course fields correctly.";
+      return;
+    }
+
+    const { data: authData, error: authError } =
+      await supabaseClient.auth.getUser();
+
+    if (authError || !authData?.user) {
+      message.textContent = "Please sign in again.";
+      return;
+    }
+
+    const user = authData.user;
+
+    const { data: roles, error: roleError } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (roleError) {
+      message.textContent = "Could not verify permissions.";
+      return;
+    }
+
+    const isAdmin = roles?.some(item => item.role === "admin");
+
+    submitButton.disabled = true;
+    message.textContent = "Saving course changes...";
+
+    const changes = {
+      title,
+      description,
+      category,
+      level,
+      price_ngn: price,
+      updated_at: new Date().toISOString()
+    };
+
+    if (!isAdmin) {
+      changes.status = "pending_approval";
+      changes.approved_by = null;
+      changes.approved_at = null;
+      changes.rejection_reason = null;
+    }
+
+    const { error } = await supabaseClient
+      .from("courses")
+      .update(changes)
+      .eq("id", courseId);
+
+    submitButton.disabled = false;
+
+    if (error) {
+      console.error("Course update error:", error);
+      message.textContent = "Could not update course: " + error.message;
+      return;
+    }
+
+    message.textContent = isAdmin
+      ? "Course updated successfully."
+      : "Course updated and submitted for administrator approval.";
+
+    await loadCourseManagerOptions();
+    await loadStudyCourses();
+  });
+
+document.getElementById("deleteCourseButton")
+  ?.addEventListener("click", async () => {
+    const courseId = document.getElementById("manageCourseSelect").value;
+    const message = document.getElementById("courseDeleteMessage");
+
+    if (!courseId) {
+      message.textContent = "Please select a course first.";
+      return;
+    }
+
+    const confirmed = confirm(
+      "Are you sure you want to archive this course? It will disappear from the public catalogue, but existing student records and certificates will be preserved."
+    );
+
+    if (!confirmed) return;
+
+    const deleteButton = document.getElementById("deleteCourseButton");
+    deleteButton.disabled = true;
+    message.textContent = "Archiving course...";
+
+    const { error } = await supabaseClient.rpc("archive_course", {
+      p_course_id: courseId
+    });
+
+    deleteButton.disabled = false;
+
+    if (error) {
+      console.error("Course archive error:", error);
+      message.textContent = "Could not archive course: " + error.message;
+      return;
+    }
+
+    message.textContent = "Course archived successfully.";
+
+    document.getElementById("courseEditForm")?.reset();
+    document.getElementById("manageCourseSelect").value = "";
+
+    await loadCourseManagerOptions();
+    await loadStudyCourses();
+    await loadCourseManagerModules("");
+  });
 
 document.getElementById("courseModuleForm")
   ?.addEventListener("submit", async event => {
