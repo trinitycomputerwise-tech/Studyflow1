@@ -817,6 +817,48 @@ src="https://www.facebook.com/tr?id=1107428878949676&ev=PageView&noscript=1"
     <option value="">Choose a course</option>
   </select>
 
+  
+  <hr>
+
+  <form id="courseEditForm">
+    <h3>Edit Course Details</h3>
+
+    <label for="editCourseTitle">Course title</label>
+    <input id="editCourseTitle" type="text" maxlength="150" required>
+
+    <label for="editCourseDescription">Course description</label>
+    <textarea id="editCourseDescription" rows="4" required></textarea>
+
+    <label for="editCourseCategory">Category</label>
+    <input id="editCourseCategory" type="text" required>
+
+    <label for="editCourseLevel">Level</label>
+    <select id="editCourseLevel" required>
+      <option value="">Choose level</option>
+      <option value="Beginner">Beginner</option>
+      <option value="Intermediate">Intermediate</option>
+      <option value="Advanced">Advanced</option>
+    </select>
+
+    <label for="editCoursePrice">Price (₦)</label>
+    <input id="editCoursePrice" type="number" min="0" step="1" required>
+
+    <button type="submit" class="primary-button">
+      Save Course Changes
+    </button>
+
+    <p id="courseEditMessage" class="muted" role="status"></p>
+  </form>
+
+  <button type="button" id="deleteCourseButton" class="secondary-button">
+    Delete Course
+  </button>
+
+  <p id="courseDeleteMessage" class="muted" role="status"></p>
+
+  <hr>
+
+
   <form id="courseModuleForm">
     <h3>Add a Module</h3>
 
