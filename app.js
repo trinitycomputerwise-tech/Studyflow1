@@ -5849,6 +5849,54 @@ const filteredUsers = (data.users || []).filter(account =>
       new Date(account.created_at).toLocaleDateString("en-NG");
 
     card.append(name, email, roles, status, created);
+   if (account.status === "Deactivated") {
+  const reactivateButton = document.createElement("button");
+  reactivateButton.type = "button";
+  reactivateButton.textContent = "Reactivate Account";
+  reactivateButton.className = "primary-button";
+
+  reactivateButton.addEventListener("click", async () => {
+    const confirmed = confirm(
+      "Reactivate this StudyFlow account?\n\n" +
+      "Original email: " + account.email +
+      "\n\nThe account's saved details and access will be restored."
+    );
+
+    if (!confirmed) return;
+
+    reactivateButton.disabled = true;
+    reactivateButton.textContent = "Reactivating...";
+
+    const { data: result, error: reactivateError } =
+      await supabaseClient.functions.invoke(
+        "admin-reactivate-user",
+        {
+          body: { user_id: account.id }
+        }
+      );
+
+    if (reactivateError || !result?.success) {
+      alert(
+        "Account reactivation failed: " +
+        (result?.error || reactivateError?.message || "Unknown error")
+      );
+
+      reactivateButton.disabled = false;
+      reactivateButton.textContent = "Reactivate Account";
+      return;
+    }
+
+    alert(result.message);
+
+    if (result.warning) {
+      alert(result.warning);
+    }
+
+    await loadAdminUsers(page);
+  });
+
+  card.appendChild(reactivateButton);
+}
 
     if (
       account.status !== "Deactivated" &&
