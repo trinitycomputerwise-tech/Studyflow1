@@ -1151,8 +1151,7 @@ function toast(message) {
 }
 
 async function setView(view) {
- const known = ["dashboard","assignments","subjects","calendar","tutoring","materials","courses","payouts","quizzes","messages"];
-
+ const known = ["dashboard","assignments","subjects","calendar","tutoring","materials","courses","payouts","quizzes","messages","accounts"];
   if (!known.includes(view)) view = "dashboard";
 
   if (view === "quizzes") {
@@ -1218,6 +1217,28 @@ async function setView(view) {
     document.getElementById("courseContentManagerPanel").style.display =
     canCreateCourses ? "" : "none";
 }
+
+if (view === "accounts") {
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const user = authData?.user;
+
+  if (!user) {
+    alert("Please sign in first.");
+    return;
+  }
+
+  const { data: roles, error } = await supabaseClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+
+  const isAdmin = !error && roles?.some(item => item.role === "admin");
+
+  if (!isAdmin) {
+    alert("Access denied. Administrator access is required.");
+    return;
+  }
+}
   if (view === "payouts") {
     const { data: authData } = await supabaseClient.auth.getUser();
     const user = authData?.user;
@@ -1269,7 +1290,7 @@ async function setView(view) {
   loadTutorConversations();
   updateUnreadMessageCount();
 }
-
+if (view === "accounts") loadAdminUsers();
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
@@ -5748,6 +5769,143 @@ async function loadAdminCourses() {
 
     list.append(card);
   });
+}
+
+
+async function loadAdminUsers(page = 1) {
+  const list = document.getElementById("adminUsersList");
+
+  if (!list) return;
+
+  list.textContent = "Loading StudyFlow accounts...";
+
+  const { data, error } = await supabaseClient.functions.invoke(
+    "admin-list-users",
+    {
+      body: { page }
+    }
+  );
+
+  if (error || !data?.success) {
+    list.textContent =
+      "Could not load accounts: " +
+      (data?.error || error?.message || "Unknown error");
+    return;
+  }
+
+  const { data: authData } = await supabaseClient.auth.getUser();
+  const currentUserId = authData?.user?.id;
+
+  list.replaceChildren();
+
+  if (!data.users?.length) {
+    list.textContent = "No StudyFlow accounts found.";
+    return;
+  }
+
+  data.users.forEach(account => {
+    const card = document.createElement("article");
+    card.className = "panel";
+
+    const name = document.createElement("h3");
+    name.textContent = account.full_name || "Unnamed user";
+
+    const email = document.createElement("p");
+    email.textContent = "Email: " + account.email;
+
+    const roles = document.createElement("p");
+    roles.textContent =
+      "Roles: " + (account.roles?.join(", ") || "Student");
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + account.status;
+
+    const created = document.createElement("p");
+    created.textContent =
+      "Registered: " +
+      new Date(account.created_at).toLocaleDateString("en-NG");
+
+    card.append(name, email, roles, status, created);
+
+    if (
+      account.status !== "Deactivated" &&
+      account.id !== currentUserId
+    ) {
+      const deactivateButton = document.createElement("button");
+      deactivateButton.type = "button";
+      deactivateButton.textContent = "Deactivate Account";
+      deactivateButton.className = "secondary-button";
+
+      deactivateButton.addEventListener("click", async () => {
+        const confirmed = confirm(
+          "Deactivate this StudyFlow account?\n\n" +
+          account.email +
+          "\n\nThe user will lose access. Payment history, payouts, " +
+          "course enrolments and certificates will be preserved."
+        );
+
+        if (!confirmed) return;
+
+        deactivateButton.disabled = true;
+        deactivateButton.textContent = "Deactivating...";
+
+        const { data: result, error: deactivateError } =
+          await supabaseClient.functions.invoke(
+            "admin-deactivate-user",
+            {
+              body: { user_id: account.id }
+            }
+          );
+
+        if (deactivateError || !result?.success) {
+          alert(
+            "Account deactivation failed: " +
+            (result?.error || deactivateError?.message || "Unknown error")
+          );
+
+          deactivateButton.disabled = false;
+          deactivateButton.textContent = "Deactivate Account";
+          return;
+        }
+
+        alert(result.message);
+
+        if (result.warnings?.length) {
+          alert("Please review:\n" + result.warnings.join("\n"));
+        }
+
+        await loadAdminUsers(page);
+      });
+
+      card.appendChild(deactivateButton);
+    }
+
+    list.appendChild(card);
+  });
+
+  const pagination = document.createElement("div");
+  pagination.style.marginTop = "16px";
+
+  if (page > 1) {
+    const previous = document.createElement("button");
+    previous.type = "button";
+    previous.textContent = "Previous";
+    previous.className = "secondary-button";
+    previous.addEventListener("click", () => loadAdminUsers(page - 1));
+    pagination.appendChild(previous);
+  }
+
+  if (data.has_more) {
+    const next = document.createElement("button");
+    next.type = "button";
+    next.textContent = "Next";
+    next.className = "primary-button";
+    next.style.marginLeft = "8px";
+    next.addEventListener("click", () => loadAdminUsers(page + 1));
+    pagination.appendChild(next);
+  }
+
+  list.appendChild(pagination);
 }
 
 
