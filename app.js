@@ -5782,6 +5782,15 @@ async function loadAdminUsers(page = 1) {
 
   if (!list) return;
 
+  const searchBox = document.getElementById("adminAccountSearch");
+
+if (searchBox && !searchBox.dataset.listenerAdded) {
+  searchBox.dataset.listenerAdded = "true";
+  searchBox.addEventListener("input", () => {
+    loadAdminUsers(1);
+  });
+}
+
   list.textContent = "Loading StudyFlow accounts...";
 
   const { data, error } = await supabaseClient.functions.invoke(
@@ -5802,13 +5811,22 @@ async function loadAdminUsers(page = 1) {
   const currentUserId = authData?.user?.id;
 
   list.replaceChildren();
+  const searchTerm = searchBox?.value.trim().toLowerCase() || "";
 
-  if (!data.users?.length) {
-    list.textContent = "No StudyFlow accounts found.";
-    return;
-  }
+const filteredUsers = (data.users || []).filter(account =>
+  (account.full_name || "").toLowerCase().includes(searchTerm) ||
+  (account.email || "").toLowerCase().includes(searchTerm) ||
+  (account.roles || []).join(" ").toLowerCase().includes(searchTerm)
+);
 
-  data.users.forEach(account => {
+ if (!filteredUsers.length) {
+  list.textContent = searchTerm
+    ? "No accounts match your search."
+    : "No StudyFlow accounts found.";
+  return;
+}
+
+ filteredUsers.forEach(account => {
     const card = document.createElement("article");
     card.className = "panel";
 
